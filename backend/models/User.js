@@ -8,17 +8,14 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["user", "admin", "superadmin"],
+      enum: ["user", "admin"],
       default: "user",
     },
-    districtCode: {
-      type: String,
-      default: null, // Not required for users
-    },
-    employeeId: {
-      type: String,
-      default: null, // Only relevant for admin/superadmin
-    },
+    districtCode: { type: String, default: null },
+    reports: [{ type: mongoose.Schema.Types.ObjectId, ref: "Issue" }],
+    unsolvedIssues: [{ type: mongoose.Schema.Types.ObjectId, ref: "Issue" }],
+    inProgressIssues: [{ type: mongoose.Schema.Types.ObjectId, ref: "Issue" }],
+    solvedIssues: [{ type: mongoose.Schema.Types.ObjectId, ref: "Issue" }],
   },
   { timestamps: true }
 );

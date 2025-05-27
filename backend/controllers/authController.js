@@ -5,54 +5,65 @@ const generateToken = require("../utils/generateToken");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const validDistricts = ["1", "2", "3"];
+const validDistricts = ["MH24", "2", "3"];
 const register = async (req, res) => {
   try {
-    const { username, email, password, role, employeeId, districtCode } =
-      req.body;
+    const { username, email, password, role = "user", employeeId, districtCode } = req.body;
 
+    // Basic validation
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "Username, email and password are required" });
+    }
+
+    // Check existing user
     const existingUser = await User.findOne({ email });
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
-
-    if (!username || !email || !password || !role) {
-      return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (role === "admin" || role === "superadmin") {
+    // Validate admin registration
+    if (role === "admin") {
       if (!employeeId || !districtCode) {
-        return res
-          .status(400)
-          .json({
-            message: "Employee ID and district code are required for admins",
-          });
+        return res.status(400).json({
+          message: "Employee ID and district code are required for admins"
+        });
       }
 
+      // Validate government email
       if (!email.endsWith("@gov.in") && !email.endsWith("@nic.in")) {
-        return res
-          .status(403)
-          .json({
-            message: "Only official government emails allowed for admins",
-          });
+        return res.status(403).json({
+          message: "Only official government emails allowed for admins"
+        });
       }
 
-      if (!validDistricts.includes(districtCode)) {
-        return res.status(403).json({ message: "Invalid district code" });
+     
+
+      // Check if admin already exists for this district
+      const existingAdmin = await User.findOne({ role: "admin", districtCode });
+      if (existingAdmin) {
+        return res.status(400).json({
+          message: `Admin already exists for district ${districtCode}`
+        });
       }
     }
 
+    // Create new user
     const newUser = new User({
       username,
       email,
-      password, // pass plain password, schema will hash it
+      password,
       role,
-      employeeId: role !== "user" ? employeeId : undefined,
-      districtCode: role !== "user" ? districtCode : undefined,
+      ...(role === "admin" && { employeeId, districtCode })
     });
 
     await newUser.save();
 
-    const token = generateToken({ id: newUser._id, role: newUser.role });
+    // Generate token using id (not userId)
+    const token = jwt.sign(
+      { id: newUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
     res.status(201).json({
       message: "User registered successfully",
@@ -62,11 +73,16 @@ const register = async (req, res) => {
         username: newUser.username,
         email: newUser.email,
         role: newUser.role,
-        districtCode: newUser.districtCode || null,
-      },
+        districtCode: newUser.districtCode || null
+      }
     });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ 
+      message: "Registration failed", 
+      error: error.message 
+    });
   }
 };
 
@@ -74,28 +90,36 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Find user
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    // Check password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-    const token = generateToken({ id: user._id, role: user.role });
+    // Create token with userId in payload
+    const token = jwt.sign(
+      { id: user._id }, // Changed from userId to id
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
-    res.status(200).json({
-      message: "Login successful",
+    res.json({
       token,
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
         role: user.role,
-        districtCode: user.districtCode || null,
       },
     });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
 
