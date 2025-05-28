@@ -6,17 +6,11 @@ const createIssue = async (req, res) => {
     const { title, description, images, coordinates, address, districtCode } =
       req.body;
 
-    if (!title || !description || !images || !coordinates || !districtCode) {
+    if (!title || !description  || !coordinates || !districtCode) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
     // Validate district code format
-    const validDistrict = /^[A-Z]{2}\s?\d{2}$/;
-    if (!validDistrict.test(districtCode)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid district code format (e.g., 'MH 24')." });
-    }
     const newIssue = new Issue({
       title,
       description,
@@ -57,26 +51,89 @@ const createIssue = async (req, res) => {
   }
 };
 
-// Get issues based on role and district
-const getIssues = async (req, res) => {
+// Get all issues for public display
+const getAllIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find()
+      .populate("createdBy", "username")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(issues);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get user-specific or admin-district issues
+const getUserIssues = async (req, res) => {
   try {
     const role = req.user.role;
     const userId = req.user._id;
     const userDistrict = req.user.districtCode;
 
     let filter = {};
+    let issues = [];
 
     if (role === "user") {
-      filter.createdBy = userId;
+      // Get issues created by the user
+      issues = await Issue.find({ createdBy: userId })
+        .populate("createdBy", "username")
+        .sort({ createdAt: -1 });
     } else if (role === "admin") {
-      filter.districtCode = userDistrict;
+      // Get all issues from admin's district with stats
+      issues = await Issue.find({ districtCode: userDistrict })
+        .populate("createdBy", "username")
+        .sort({ createdAt: -1 });
+
+      // Get statistics for admin dashboard
+      const stats = {
+        total: issues.length,
+        unsolved: issues.filter((issue) => issue.status === "unsolved").length,
+        inProgress: issues.filter(
+          (issue) => issue.status === "in progress"
+        ).length,
+        solved: issues.filter((issue) => issue.status === "solved").length,
+      };
+
+      return res.status(200).json({ issues, stats });
     }
 
-    const issues = await Issue.find(filter)
-      .populate("createdBy", "username email")
-      .sort({ createdAt: -1 });
-
     res.status(200).json(issues);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get issue statistics for admin dashboard
+const getIssueStats = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const districtCode = req.user.districtCode;
+
+    const stats = await Issue.aggregate([
+      { $match: { districtCode } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const formattedStats = {
+      unsolved: 0,
+      inProgress: 0,
+      solved: 0,
+    };
+
+    stats.forEach((stat) => {
+      formattedStats[stat._id] = stat.count;
+    });
+
+    res.status(200).json(formattedStats);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -152,6 +209,8 @@ const updateIssueStatus = async (req, res) => {
 
 module.exports = {
   createIssue,
-  getIssues,
+  getAllIssues, // Public issues
+  getUserIssues, // User/Admin specific issues
+  getIssueStats, // Admin dashboard stats
   updateIssueStatus,
 };

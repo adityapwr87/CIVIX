@@ -1,21 +1,22 @@
 const express = require("express");
 const router = express.Router();
-
+const { protect } = require("../middleware/authMiddleware");
 const {
   createIssue,
-  getIssues,
+  getAllIssues,
+  getUserIssues,
+  getIssueStats,
   updateIssueStatus,
 } = require("../controllers/issueController");
 
-const { protect, isAdmin } = require("../middleware/authMiddleware");
+// Public routes
+router.get("/all", getAllIssues);
 
-// User and Admin can create issues (user creates, admin handles)
-router.post("/", protect, createIssue);
-
-// Get issues for current user or admin
-router.get("/", protect, getIssues);
-
-// Admin updates issue status
-router.patch("/:issueId/status", protect, isAdmin, updateIssueStatus);
+// Protected routes
+router.use(protect);
+router.post("/", createIssue);
+router.get("/my-issues", getUserIssues);
+router.get("/stats", getIssueStats);
+router.patch("/:issueId/status", updateIssueStatus);
 
 module.exports = router;
