@@ -65,27 +65,110 @@
   margin-bottom: 1rem;
 }
 
+.issue-image-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-height: 600px; /* Add max height */
+}
+
 .issue-image-large {
   width: 100%;
-  height: 280px;
+  height: auto; /* Change from fixed height */
+  min-height: 300px; /* Add minimum height */
+  max-height: 600px; /* Add maximum height */
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
-  background-color: #f1f5f9;
+  background: #f0f0f0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  align-items: center;
 }
 
 .issue-image-large img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Change from cover to contain */
+  transition: opacity 0.3s ease;
+  max-height: 600px;
+}
+
+.image-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.issue-image-large:hover .image-nav-button {
+  opacity: 1;
+}
+
+.image-nav-button:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.image-nav-button.prev {
+  left: 16px;
+}
+
+.image-nav-button.next {
+  right: 16px;
+}
+
+.image-indicators {
+  display: flex;
+  gap: 8px;
+  margin-top: -8px;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.indicator-dot.active {
+  background: #2563eb;
+  transform: scale(1.2);
 }
 
 .image-placeholder {
-  font-size: 2rem;
-  color: #94a3b8;
+  width: 100%;
+  min-height: 300px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+  font-size: 48px;
+  gap: 16px;
+}
+
+.image-placeholder span {
+  font-size: 16px;
+  color: #666;
 }
 
 .issue-description {
@@ -300,5 +383,19 @@
 
   .issue-title {
     font-size: 1.4rem;
+  }
+
+  .issue-image-large {
+    min-height: 200px;
+    max-height: 400px;
+  }
+
+  .issue-image-large img {
+    max-height: 400px;
+  }
+
+  .image-placeholder {
+    min-height: 200px;
+    max-height: 400px;
   }
 }

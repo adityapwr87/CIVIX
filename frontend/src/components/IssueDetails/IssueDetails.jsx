@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaMapMarkerAlt, FaThumbsUp, FaCommentDots, FaImage, FaRegThumbsUp } from "react-icons/fa";
+import {
+  FaMapMarkerAlt,
+  FaThumbsUp,
+  FaCommentDots,
+  FaImage,
+  FaRegThumbsUp,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import Navbar from "../Navbar/Navbar";
 import "./IssueDetails.css";
 
@@ -11,12 +19,13 @@ const IssueDetails = () => {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [hasUpvoted, setHasUpvoted] = useState(false);
-  const userId = JSON.parse(localStorage.getItem('user'))._id;
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const userId = JSON.parse(localStorage.getItem("user"))._id;
 
   useEffect(() => {
     fetch(`http://localhost:5000/api/issues/${id}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setIssue(data);
         setLoading(false);
       });
@@ -41,7 +50,7 @@ const IssueDetails = () => {
     });
     const data = await res.json();
     if (res.ok) {
-      setIssue(prev => ({
+      setIssue((prev) => ({
         ...prev,
         comments: [...prev.comments, data.comment],
       }));
@@ -58,20 +67,32 @@ const IssueDetails = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (res.ok) {
         const data = await res.json();
-        setIssue(prev => ({
+        setIssue((prev) => ({
           ...prev,
-          upvotes: hasUpvoted 
-            ? prev.upvotes.filter(id => id !== userId)
-            : [...prev.upvotes, userId]
+          upvotes: hasUpvoted
+            ? prev.upvotes.filter((id) => id !== userId)
+            : [...prev.upvotes, userId],
         }));
         setHasUpvoted(!hasUpvoted);
       }
     } catch (error) {
       console.error("Error upvoting:", error);
     }
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? issue.images.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === issue.images.length - 1 ? 0 : prev + 1
+    );
   };
 
   if (loading) return <div>Loading...</div>;
@@ -83,16 +104,61 @@ const IssueDetails = () => {
       <div className="issue-details-container">
         <div className="issue-main-card">
           <div className="issue-header-row">
-            <span className={`status-badge ${issue.status}`}>{issue.status}</span>
-            <span className="issue-district">{issue.location?.address?.split(",").pop()?.trim() || issue.districtCode}</span>
+            <span className={`status-badge ${issue.status}`}>
+              {issue.status}
+            </span>
+            <span className="issue-district">
+              {issue.location?.address?.split(",").pop()?.trim() ||
+                issue.districtCode}
+            </span>
           </div>
           <h1 className="issue-title">{issue.title}</h1>
-          <div className="issue-image-large">
+          <div className="issue-image-container">
             {issue.images && issue.images.length > 0 ? (
-              <img src={issue.images[0]} alt={issue.title} />
+              <>
+                <div className="issue-image-large">
+                  <img
+                    src={issue.images[currentImageIndex]}
+                    alt={issue.title}
+                  />
+                  {issue.images.length > 1 && (
+                    <>
+                      <button
+                        className="image-nav-button prev"
+                        onClick={handlePrevImage}
+                        aria-label="Previous image"
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <button
+                        className="image-nav-button next"
+                        onClick={handleNextImage}
+                        aria-label="Next image"
+                      >
+                        <FaChevronRight />
+                      </button>
+                    </>
+                  )}
+                </div>
+                {issue.images.length > 1 && (
+                  <div className="image-indicators">
+                    {issue.images.map((_, index) => (
+                      <button
+                        key={index}
+                        className={`indicator-dot ${
+                          index === currentImageIndex ? "active" : ""
+                        }`}
+                        onClick={() => setCurrentImageIndex(index)}
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="image-placeholder">
                 <FaImage />
+                <span>No image available</span>
               </div>
             )}
           </div>
@@ -102,7 +168,14 @@ const IssueDetails = () => {
               <FaMapMarkerAlt /> {issue.location?.address}
             </span>
             <span className="meta-item">
-              <svg width="18" height="18" style={{marginRight: 4}} fill="#888"><path d="M7 10h1V7h2v3h1v2H7v-2z"/></svg>
+              <svg
+                width="18"
+                height="18"
+                style={{ marginRight: 4 }}
+                fill="#888"
+              >
+                <path d="M7 10h1V7h2v3h1v2H7v-2z" />
+              </svg>
               {new Date(issue.createdAt).toLocaleString(undefined, {
                 year: "numeric",
                 month: "long",
@@ -127,11 +200,12 @@ const IssueDetails = () => {
               </div>
             </div>
             <div className="issue-footer-stats">
-              <span 
-                className={`upvote-button ${hasUpvoted ? 'active' : ''}`}
+              <span
+                className={`upvote-button ${hasUpvoted ? "active" : ""}`}
                 onClick={handleUpvote}
               >
-                {hasUpvoted ? <FaThumbsUp /> : <FaRegThumbsUp />} {issue.upvotes?.length || 0}
+                {hasUpvoted ? <FaThumbsUp /> : <FaRegThumbsUp />}{" "}
+                {issue.upvotes?.length || 0}
               </span>
               <span>
                 <FaCommentDots /> {issue.comments?.length || 0}
@@ -180,14 +254,16 @@ const IssueDetails = () => {
           <form className="comment-form" onSubmit={handleCommentSubmit}>
             <textarea
               value={comment}
-              onChange={e => setComment(e.target.value)}
+              onChange={(e) => setComment(e.target.value)}
               placeholder="Add a comment..."
               required
               rows={3}
             />
             <button type="submit">
               <span style={{ marginRight: 6, display: "inline-block" }}>
-                <svg width="18" height="18" fill="currentColor"><path d="M2 16l14-7L2 2v5l10 2-10 2z"/></svg>
+                <svg width="18" height="18" fill="currentColor">
+                  <path d="M2 16l14-7L2 2v5l10 2-10 2z" />
+                </svg>
               </span>
               Post Comment
             </button>
