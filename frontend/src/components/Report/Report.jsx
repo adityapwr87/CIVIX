@@ -55,6 +55,7 @@ const Report = () => {
     districtCode: "",
   });
 
+  const [imageFiles, setImageFiles] = useState([]); // <-- Add this
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showMap, setShowMap] = useState(false);
@@ -95,13 +96,12 @@ const Report = () => {
     }));
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    // TODO: Implement image upload to get URLs
-    const imageUrls = files.map(file => URL.createObjectURL(file));
+    setImageFiles(files); // Save files for submission
     setFormData(prev => ({
       ...prev,
-      images: imageUrls
+      images: files.map(file => URL.createObjectURL(file)) // For preview only
     }));
   };
 
@@ -112,24 +112,32 @@ const Report = () => {
 
     try {
       const token = localStorage.getItem('token');
-      
+
       if (!formData.title || !formData.description || !formData.coordinates || !formData.districtCode) {
         throw new Error('Please fill all required fields');
       }
 
+      // Use FormData for file upload
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("coordinates", JSON.stringify(formData.coordinates));
+      data.append("address", formData.address);
+      data.append("districtCode", formData.districtCode);
+      imageFiles.forEach((file) => data.append("images", file));
+
       const response = await fetch('http://localhost:5000/api/issues', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: data
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to submit issue');
+        throw new Error(result.message || 'Failed to submit issue');
       }
 
       navigate('/dashboard');
@@ -242,6 +250,16 @@ const Report = () => {
                 onChange={handleImageUpload}
               />
               <small>You can upload multiple images (optional)</small>
+              <div className="image-preview-list">
+                {formData.images && formData.images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={`preview-${idx}`}
+                    style={{ width: 80, height: 80, objectFit: "cover", marginRight: 8, marginTop: 8 }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 

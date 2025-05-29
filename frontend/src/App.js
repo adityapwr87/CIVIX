@@ -6,6 +6,8 @@ import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import Report from './components/Report/Report';
 import Navbar from './components/Navbar/Navbar';
+import IssueDetails from './components/IssueDetails/IssueDetails';
+import UserProfile from './components/UserProfile/UserProfile';
 
 const AuthenticatedLayout = ({ children }) => {
   return (
@@ -58,6 +60,8 @@ function App() {
               </PrivateRoute>
             } 
           />
+          <Route path="/issue/:id" element={<IssueDetails />} />
+          <Route path="/user/:userId" element={<UserProfile />} />
         </Routes>
       </div>
     </Router>

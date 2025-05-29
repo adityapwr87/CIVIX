@@ -88,7 +88,12 @@ const Home = () => {
 
         <div className="issues-grid">
           {issues.map((issue) => (
-            <div key={issue._id} className="issue-card">
+            <div
+              key={issue._id}
+              className="issue-card"
+              onClick={() => handleIssueClick(issue._id)}
+              style={{ cursor: "pointer" }}
+            >
               <span className="status-badge reported">{issue.status}</span>
 
               <div className="issue-image-container">
