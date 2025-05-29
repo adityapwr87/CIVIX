@@ -5,14 +5,17 @@ const generateToken = require("../utils/generateToken");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const validDistricts = ["MH24", "2", "3"];
 const register = async (req, res) => {
   try {
     const { username, email, password, role = "user", employeeId, districtCode } = req.body;
 
+    console.log('Registration request received:', req.body);
+
     // Basic validation
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Username, email and password are required" });
+      return res.status(400).json({ 
+        message: "Username, email and password are required" 
+      });
     }
 
     // Check existing user
@@ -23,20 +26,18 @@ const register = async (req, res) => {
 
     // Validate admin registration
     if (role === "admin") {
+      // Only check email domain for admin roles
+      if (!email.endsWith("@gov.in") && !email.endsWith("@nic.in")) {
+        return res.status(403).json({
+          message: "Only official government emails allowed for admin registration"
+        });
+      }
+
       if (!employeeId || !districtCode) {
         return res.status(400).json({
           message: "Employee ID and district code are required for admins"
         });
       }
-
-      // Validate government email
-      if (!email.endsWith("@gov.in") && !email.endsWith("@nic.in")) {
-        return res.status(403).json({
-          message: "Only official government emails allowed for admins"
-        });
-      }
-
-     
 
       // Check if admin already exists for this district
       const existingAdmin = await User.findOne({ role: "admin", districtCode });
@@ -58,7 +59,9 @@ const register = async (req, res) => {
 
     await newUser.save();
 
-    // Generate token using id (not userId)
+    console.log('User created successfully:', newUser);
+
+    // Generate token
     const token = jwt.sign(
       { id: newUser._id },
       process.env.JWT_SECRET,
@@ -78,6 +81,15 @@ const register = async (req, res) => {
     });
 
   } catch (error) {
+    if (error.code === 11000) {
+      // Handle duplicate key error
+      const duplicateField = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        message: `Duplicate value for field: ${duplicateField}`,
+        error: error.message
+      });
+    }
+
     console.error("Registration error:", error);
     res.status(500).json({ 
       message: "Registration failed", 
@@ -90,21 +102,30 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Find user and explicitly select password field
+    const user = await User.findOne({ email }).select('+password');
+    
     if (!user) {
+      console.log('No user found with email:', email);
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
+    
     if (!isMatch) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Create token with userId in payload
+    // Create token
     const token = jwt.sign(
-      { id: user._id }, // Changed from userId to id
+      { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
@@ -116,10 +137,12 @@ const login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-      },
+        districtCode: user.districtCode || null
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: "Login failed", error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ message: "Login failed" });
   }
 };
 

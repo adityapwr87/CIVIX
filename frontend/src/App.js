@@ -8,6 +8,7 @@ import Report from './components/Report/Report';
 import Navbar from './components/Navbar/Navbar';
 import IssueDetails from './components/IssueDetails/IssueDetails';
 import UserProfile from './components/UserProfile/UserProfile';
+import Chat from './components/Chat/Chat';
 
 const AuthenticatedLayout = ({ children }) => {
   return (
@@ -56,6 +57,16 @@ function App() {
               <PrivateRoute>
                 <AuthenticatedLayout>
                   <Report />
+                </AuthenticatedLayout>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/chat" 
+            element={
+              <PrivateRoute>
+                <AuthenticatedLayout>
+                  <Chat />
                 </AuthenticatedLayout>
               </PrivateRoute>
             } 
