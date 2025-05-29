@@ -19,10 +19,49 @@ const Home = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
+  const [filteredIssues, setFilteredIssues] = useState([]);
 
   useEffect(() => {
     fetchIssues();
   }, []);
+
+  useEffect(() => {
+    let result = [...issues];
+
+    // Search filter
+    if (searchTerm) {
+      result = result.filter(
+        (issue) =>
+          issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          issue.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          issue.location.address
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      result = result.filter(
+        (issue) => issue.status.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
+
+    // Sort
+    result = result.sort((a, b) => {
+      if (sortBy === "recent") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else if (sortBy === "upvotes") {
+        return (b.upvotes?.length || 0) - (a.upvotes?.length || 0);
+      }
+      return 0;
+    });
+
+    setFilteredIssues(result);
+  }, [issues, searchTerm, statusFilter, sortBy]);
 
   const fetchIssues = async () => {
     try {
@@ -73,21 +112,29 @@ const Home = () => {
         </div>
 
         <div className="filters">
-          <input type="text" placeholder="Search issues..." />
-          <select>
-            <option>All Status</option>
-            <option>Reported</option>
-            <option>In Progress</option>
-            <option>Resolved</option>
+          <input
+            type="text"
+            placeholder="Search issues..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All Status</option>
+            <option value="reported">Reported</option>
+            <option value="in progress">In Progress</option>
+            <option value="resolved">Resolved</option>
           </select>
-          <select>
-            <option>Recent Activity</option>
-            <option>Most Upvoted</option>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="recent">Recent Activity</option>
+            <option value="upvotes">Most Upvoted</option>
           </select>
         </div>
 
         <div className="issues-grid">
-          {issues.map((issue) => (
+          {filteredIssues.map((issue) => (
             <div
               key={issue._id}
               className="issue-card"
