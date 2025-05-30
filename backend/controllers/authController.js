@@ -8,11 +8,20 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const validDistricts = ["MH24", "2", "3"];
 const register = async (req, res) => {
   try {
-    const { username, email, password, role = "user", employeeId, districtCode } = req.body;
+    const {
+      username,
+      email,
+      password,
+      role = "user",
+      employeeId,
+      districtCode,
+    } = req.body;
 
     // Basic validation
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Username, email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Username, email and password are required" });
     }
 
     // Check existing user
@@ -25,24 +34,22 @@ const register = async (req, res) => {
     if (role === "admin") {
       if (!employeeId || !districtCode) {
         return res.status(400).json({
-          message: "Employee ID and district code are required for admins"
+          message: "Employee ID and district code are required for admins",
         });
       }
 
       // Validate government email
       if (!email.endsWith("@gov.in") && !email.endsWith("@nic.in")) {
         return res.status(403).json({
-          message: "Only official government emails allowed for admins"
+          message: "Only official government emails allowed for admins",
         });
       }
-
-     
 
       // Check if admin already exists for this district
       const existingAdmin = await User.findOne({ role: "admin", districtCode });
       if (existingAdmin) {
         return res.status(400).json({
-          message: `Admin already exists for district ${districtCode}`
+          message: `Admin already exists for district ${districtCode}`,
         });
       }
     }
@@ -53,17 +60,15 @@ const register = async (req, res) => {
       email,
       password,
       role,
-      ...(role === "admin" && { employeeId, districtCode })
+      ...(role === "admin" && { employeeId, districtCode }),
     });
 
     await newUser.save();
 
     // Generate token using id (not userId)
-    const token = jwt.sign(
-      { id: newUser._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -73,53 +78,57 @@ const register = async (req, res) => {
         username: newUser.username,
         email: newUser.email,
         role: newUser.role,
-        districtCode: newUser.districtCode || null
-      }
+        districtCode: newUser.districtCode || null,
+      },
     });
-
   } catch (error) {
     console.error("Registration error:", error);
-    res.status(500).json({ 
-      message: "Registration failed", 
-      error: error.message 
+    res.status(500).json({
+      message: "Registration failed",
+      error: error.message,
     });
   }
 };
 
 const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  const result = {
+    status: 0,
+    message: "User successfully logged in",
+    data: {},
+  };
+
   try {
-    const { email, password } = req.body;
+    const user = await User.findOne({ email }).select("+password");
 
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "24h",
+      });
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // Create token with userId in payload
-    const token = jwt.sign(
-      { id: user._id }, // Changed from userId to id
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
+      const resp_data = {
+        _id: user._id,
         username: user.username,
         email: user.email,
         role: user.role,
-      },
-    });
+        districtCode: user.districtCode || null,
+        token: token,
+      };
+
+      result.data = resp_data;
+      result.status = 1;
+      res.status(200).json(result);
+    } else {
+      result.message = "Invalid email or password";
+      result.status = 0;
+      res.status(401).json(result);
+    }
   } catch (error) {
-    res.status(500).json({ message: "Login failed", error: error.message });
+    console.error("Login error:", error);
+    result.message = error.message;
+    result.status = 0;
+    res.status(500).json(result);
   }
 };
 
