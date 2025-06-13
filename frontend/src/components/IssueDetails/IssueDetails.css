@@ -360,6 +360,29 @@
   background: #dbeafe;
 }
 
+.start-chat-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.start-chat-button:hover {
+  background-color: #0066cc;
+}
+
+.start-chat-button svg {
+  font-size: 1rem;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .issue-details-layout {

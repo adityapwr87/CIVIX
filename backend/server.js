@@ -1,35 +1,88 @@
-require("dotenv").config();
-const express = require('express');
-const http = require("http");
-const connectDB = require("./config/db");
+require('dotenv').config();
+const http = require('http');
+const socketIo = require('socket.io');
+const mongoose = require('mongoose');
 const app = require('./app');
-const { Server } = require('socket.io');
-const { setupChatWebSocket } = require('./controllers/chatController');
+const connectDB = require('./config/db');
+const SocketManager = require('./utils/socketManager');
 
-// Create HTTP server first
 const server = http.createServer(app);
 
-// Initialize Socket.IO with the server instance
-const io = new Server(server, {
+// Configure Socket.IO
+const io = socketIo(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ["Authorization", "Content-Type", "x-refresh-token"]
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ['websocket', 'polling']
 });
 
-// Setup WebSocket handlers
-setupChatWebSocket(io);
+// Initialize Socket Manager
+const socketManager = new SocketManager(io);
 
-// Connect to MongoDB
-connectDB();
+// Database connection with retry
+const connectWithRetry = async (retries = 5) => {
+  try {
+    await connectDB();
+    console.log('MongoDB Connected');
+  } catch (err) {
+    if (retries > 0) {
+      console.log(`MongoDB connection failed. Retrying... (${retries} attempts left)`);
+      setTimeout(() => connectWithRetry(retries - 1), 5000);
+    } else {
+      console.error('MongoDB connection error:', err);
+      process.exit(1);
+    }
+  }
+};
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Handle graceful shutdown
+const gracefulShutdown = () => {
+  console.log('Received shutdown signal');
+  
+  io.close(() => {
+    console.log('Socket.IO connections closed');
+    
+    server.close(() => {
+      console.log('HTTP server closed');
+      
+      mongoose.connection.close(false, () => {
+        console.log('MongoDB connection closed');
+        process.exit(0);
+      });
+    });
+  });
+};
 
-// Handle unhandled promise rejections
+// Error handlers
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
-  server.close(() => process.exit(1));
+  gracefulShutdown();
 });
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  gracefulShutdown();
+});
+
+// Start server
+const startServer = async () => {
+  await connectWithRetry();
+  const PORT = process.env.PORT || 5000;
+  
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Socket.IO server ready for connections`);
+  });
+};
+
+startServer();
+
+module.exports = { server, io };

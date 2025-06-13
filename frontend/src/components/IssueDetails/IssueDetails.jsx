@@ -8,6 +8,7 @@ import {
   FaRegThumbsUp,
   FaChevronLeft,
   FaChevronRight,
+  FaComments,
 } from "react-icons/fa";
 import Navbar from "../Navbar/Navbar";
 import "./IssueDetails.css";
@@ -197,6 +198,15 @@ const IssueDetails = () => {
                   {issue.createdBy.username}
                 </span>
                 <div className="reporter-role">Reporter</div>
+                {/* Add Start Chat button if the user is not the issue creator */}
+                {userId !== issue.createdBy._id && (
+                  <button 
+                    className="start-chat-button"
+                    onClick={() => navigate(`/issue/${id}/chat`)}
+                  >
+                    <FaComments /> Start Chatjj
+                  </button>
+                )}
               </div>
             </div>
             <div className="issue-footer-stats">

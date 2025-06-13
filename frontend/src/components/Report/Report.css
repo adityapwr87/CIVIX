@@ -1,7 +1,7 @@
 .report-container {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
 }
 
 .report-content {
@@ -9,6 +9,13 @@
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.report-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .report-content h1 {
@@ -33,8 +40,8 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1e293b;
   font-weight: 500;
+  color: #1e293b;
 }
 
 .form-group input,
@@ -48,9 +55,18 @@
   color: #1e293b;
 }
 
+.form-group input[type="text"],
 .form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  min-height: 120px;
   resize: vertical;
-  min-height: 100px;
 }
 
 .location-input {
@@ -72,11 +88,12 @@
 }
 
 .map-container {
+  height: 400px;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  overflow: hidden;
   margin-top: 1rem;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  overflow: hidden;
-  height: 400px;
 }
 
 .leaflet-container {
@@ -85,11 +102,11 @@
 }
 
 .error-message {
-  background: #fee2e2;
-  color: #dc2626;
-  padding: 0.75rem;
-  border-radius: 6px;
+  padding: 1rem;
   margin-bottom: 1rem;
+  background: #ffebee;
+  color: #d32f2f;
+  border-radius: 4px;
 }
 
 .form-actions {
@@ -99,14 +116,20 @@
 }
 
 .submit-button {
-  padding: 0.75rem 2rem;
-  background: #2563eb;
+  width: 100%;
+  padding: 1rem;
+  background: #1976d2;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #1565c0;
 }
 
 .submit-button:hover {
@@ -114,7 +137,7 @@
 }
 
 .submit-button:disabled {
-  background: #94a3b8;
+  background: #ccc;
   cursor: not-allowed;
 }
 
@@ -248,4 +271,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.selected-location {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
 }

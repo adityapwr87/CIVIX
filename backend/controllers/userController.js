@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Issue = require("../models/Issue");
+const { adminsCache } = require('../middleware/activeAdminsCache');
 
 const getUserProfile = async (req, res) => {
   try {
@@ -39,4 +40,21 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile };
+const getActiveAdmins = async (req, res) => {
+  try {
+    const admins = await User.find({ 
+      role: 'admin',
+      isOnline: true 
+    }).select('username districtCode lastActive');
+
+    // Cache the results
+    adminsCache.set('activeAdmins', admins);
+    
+    res.json(admins);
+  } catch (error) {
+    console.error('Error fetching active admins:', error);
+    res.status(500).json({ message: 'Error fetching active admins' });
+  }
+};
+
+module.exports = { getUserProfile, getActiveAdmins };

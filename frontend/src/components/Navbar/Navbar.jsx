@@ -42,9 +42,10 @@ const Navbar = () => {
         </div>
 
         <div className="user-profile">
-          <button className="profile-button">
-            <FaUser />
-          </button>
+              <Link to="/profile" className="profile-link">
+              <FaUser />
+              <span></span>
+            </Link>
         </div>
       </div>
     </nav>

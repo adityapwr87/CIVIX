@@ -1,74 +1,107 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import Navbar from "../Navbar/Navbar";
-import "./UserProfile.css";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useUser } from '../../context/UserContext';
+import ProfileHeader from './ProfileHeader';
+import ProfileTabs from './ProfileTabs';
+import ProfileContent from './ProfileContent';
+import './UserProfile.css';
 
 const UserProfile = () => {
   const { userId } = useParams();
-  const [profile, setProfile] = useState(null);
-  const [tab, setTab] = useState("issues");
+  const navigate = useNavigate();
+  const { user: currentUser } = useUser();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('personal');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/users/${userId}`)
-      .then(res => res.json())
-      .then(setProfile);
-  }, [userId]);
+    const fetchProfileData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
 
-  if (!profile) return <div>Loading...</div>;
+        const targetUserId = userId || JSON.parse(localStorage.getItem('user'))?.id;
+
+        if (!targetUserId) {
+          throw new Error('No user ID available');
+        }
+
+        const response = await fetch(`http://localhost:5000/api/users/${targetUserId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('User not found');
+          }
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server returned invalid response format');
+        }
+
+        const userData = await response.json();
+
+        const issuesResponse = await fetch(`http://localhost:5000/api/issues/user/${targetUserId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        let issuesData = [];
+        if (issuesResponse.ok) {
+          issuesData = await issuesResponse.json();
+        } else {
+          console.warn('Failed to fetch user issues:', issuesResponse.statusText);
+        }
+
+        setProfileData({
+          user: {
+            ...userData,
+            id: targetUserId
+          },
+          issues: issuesData,
+          activities: issuesData?.map(issue => ({
+            type: 'issue',
+            title: issue.title,
+            status: issue.status,
+            timestamp: issue.createdAt
+          })) || []
+        });
+      } catch (error) {
+        console.error('Profile fetch error:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [userId, navigate, currentUser]);
+
+  if (loading) return <div className="profile-loading">Loading profile...</div>;
+  if (error) return <div className="profile-error">{error}</div>;
+  if (!profileData) return <div className="profile-error">Profile not found</div>;
 
   return (
-    <>
-      <Navbar />
-      <div className="user-profile-container">
-        <div className="profile-header">
-          <div className="avatar-placeholder" />
-          <div>
-            <h2>{profile.username}</h2>
-            <p>Community advocate passionate about improving our neighborhood.<br />
-              Always ready to help make our city a better place to live.</p>
-            <div>
-              <span>Joined {new Date(profile.joined).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <button className="chat-btn">Start Chat</button>
-        </div>
-        <div className="profile-stats">
-          <span><b>{profile.issuesReported}</b> Issues Reported</span>
-          <span><b>{profile.commentsCount}</b> Comments</span>
-          <span><b>{profile.totalUpvotes}</b> Total Upvotes</span>
-        </div>
-        <div className="profile-tabs">
-          <button onClick={() => setTab("issues")} className={tab === "issues" ? "active" : ""}>Reported Issues</button>
-          <button onClick={() => setTab("comments")} className={tab === "comments" ? "active" : ""}>Recent Comments</button>
-        </div>
-        {tab === "issues" && (
-          <div className="reported-issues-list">
-            {profile.reportedIssues.map(issue => (
-              <div key={issue._id} className="issue-card">
-                <span className={`status-badge ${issue.status}`}>{issue.status}</span>
-                <Link to={`/issue/${issue._id}`}><b>{issue.title}</b></Link>
-                <div>
-                  <span>👍 {issue.upvotes?.length || 0} upvotes</span>
-                  <span>💬 {issue.comments?.length || 0} comments</span>
-                </div>
-                <div>{new Date(issue.createdAt).toLocaleDateString()}</div>
-              </div>
-            ))}
-          </div>
-        )}
-        {tab === "comments" && (
-          <div className="user-comments-list">
-            {profile.comments.map((c, idx) => (
-              <div key={idx} className="comment-card">
-                <Link to={`/issue/${c.issue?._id}`}>{c.issue?.title || "Issue"}</Link>
-                <div>{c.text}</div>
-                <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+    <div className="profile-container">
+      <ProfileHeader user={profileData.user} />
+      <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ProfileContent 
+        activeTab={activeTab}
+        user={profileData.user}
+        issues={profileData.issues}
+        activities={profileData.activities}
+      />
+    </div>
   );
 };
 

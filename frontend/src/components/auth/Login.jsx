@@ -20,7 +20,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your login logic here
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
@@ -33,12 +32,23 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Ensure consistent user data storage
         localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id || data.user._id);
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user.id || data.user._id,
+          username: data.user.username,
+          email: data.user.email,
+          districtCode: data.user.districtCode,
+          role: data.user.role
+        }));
+        
         navigate('/dashboard');
       } else {
-        setError(data.message);
+        setError(data.message || 'Login failed');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Failed to login. Please try again.');
     }
   };
