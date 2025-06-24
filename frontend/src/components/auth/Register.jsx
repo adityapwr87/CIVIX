@@ -1,20 +1,30 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaBuilding } from 'react-icons/fa';
-import './Auth.css';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaBuilding,
+  FaArrowLeft,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
+import "./Auth.css";
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'user',
-    employeeId: '',
-    districtCode: ''
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+    employeeId: "",
+    districtCode: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,9 +35,9 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
@@ -37,19 +47,19 @@ const Register = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: formData.role,
       };
 
       // Add admin-specific fields if role is admin
-      if (formData.role === 'admin') {
+      if (formData.role === "admin") {
         requestBody.employeeId = formData.employeeId;
         requestBody.districtCode = formData.districtCode;
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
@@ -57,19 +67,22 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/dashboard');
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/dashboard");
       } else {
         setError(data.message);
       }
     } catch (err) {
-      setError('Failed to register. Please try again.');
+      setError("Failed to register. Please try again.");
     }
   };
 
   return (
     <div className="auth-container">
+      <button onClick={() => navigate("/")} className="back-home">
+        <FaArrowLeft /> Back to Home
+      </button>
       <div className="auth-card">
         <h2>Create Account</h2>
         <p className="auth-subtitle">Sign up to start reporting issues</p>
@@ -124,7 +137,7 @@ const Register = () => {
           </div>
 
           {/* Conditional admin fields */}
-          {formData.role === 'admin' && (
+          {formData.role === "admin" && (
             <>
               <div className="form-group">
                 <div className="input-icon">
@@ -161,13 +174,21 @@ const Register = () => {
             <div className="input-icon">
               <FaLock />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex="-1"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
 
@@ -175,13 +196,21 @@ const Register = () => {
             <div className="input-icon">
               <FaLock />
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                tabIndex="-1"
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
 
@@ -191,7 +220,7 @@ const Register = () => {
         </form>
 
         <p className="auth-footer">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link to="/login" className="auth-link">
             Sign in
           </Link>

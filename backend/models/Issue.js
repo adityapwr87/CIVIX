@@ -12,7 +12,7 @@ const issueSchema = new mongoose.Schema(
     },
     districtCode: String,
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    status: { type: String, default: "reported" },
+    status: { type: String, default: "unsolved" },
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [
       {

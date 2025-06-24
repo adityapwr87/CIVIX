@@ -8,6 +8,7 @@ import {
   FaImage,
 } from "react-icons/fa";
 
+import Navbar from "../Navbar/Navbar";
 const statusColors = {
   reported: "red",
   "in progress": "goldenrod",
@@ -102,57 +103,57 @@ const Home = () => {
   }
 
   return (
-    <div className="home-container">
-      <section className="content">
-        <div className="hero-section">
-          <div className="hero-text">
-            <h3>Civic Issues</h3>
-            <p>Report and track community problems in your area</p>
+    <div className="home-layout">
+      <Navbar />
+      <div className="home-container">
+        <section className="content">
+          <div className="hero-section">
+            <div className="hero-text">
+              <h3>Civic Issues</h3>
+              <p>Report and track community problems in your area</p>
+            </div>
           </div>
-        </div>
 
-        <div className="filters">
-          <input
-            type="text"
-            placeholder="Search issues..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="reported">Reported</option>
-            <option value="in progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-          </select>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="recent">Recent Activity</option>
-            <option value="upvotes">Most Upvoted</option>
-          </select>
-        </div>
-
-        <div className="issues-grid">
-          {filteredIssues.map((issue) => (
-            <div
-              key={issue._id}
-              className="issue-card"
-              onClick={() => handleIssueClick(issue._id)}
-              style={{ cursor: "pointer" }}
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="Search issues..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <span className="status-badge reported">{issue.status}</span>
+              <option value="all">All Status</option>
+              <option value="reported">Reported</option>
+              <option value="in progress">In Progress</option>
+              <option value="solved">Solved</option>
+            </select>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="recent">Recent Activity</option>
+              <option value="upvotes">Most Upvoted</option>
+            </select>
+          </div>
 
-              <div className="issue-image-container">
-                {issue.images && issue.images.length > 0 ? (
-                  <img
-                    src={issue.images[0]}
-                    alt={issue.title}
-                    className="issue-image"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.style.display = "none";
-                      e.target.parentElement.innerHTML = `
+          <div className="issues-grid">
+            {filteredIssues.map((issue) => (
+              <div
+                key={issue._id}
+                className="issue-card"
+                onClick={() => handleIssueClick(issue._id)}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="issue-image-container">
+                  {issue.images && issue.images.length > 0 ? (
+                    <img
+                      src={issue.images[0]}
+                      alt={issue.title}
+                      className="issue-image"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = "none";
+                        e.target.parentElement.innerHTML = `
                         <div class="image-placeholder">
                           <div class="image-placeholder-content">
                             <FaImage />
@@ -160,37 +161,43 @@ const Home = () => {
                           </div>
                         </div>
                       `;
-                    }}
-                  />
-                ) : (
-                  <div className="image-placeholder">
-                    <div className="image-placeholder-content">
-                      <FaImage />
-                      <span>No image available</span>
+                      }}
+                    />
+                  ) : (
+                    <div className="image-placeholder">
+                      <div className="image-placeholder-content">
+                        <FaImage />
+                        <span>No image available</span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+                <span className="status-badge reported">{issue.status}</span>
 
-              <h3 className="issue-title">{issue.title}</h3>
-              <p>{issue.description}</p>
-              <p className="location">
-                <FaMapMarkerAlt /> {issue.location.address}
-              </p>
-              <p className="user">{issue.createdBy.username}</p>
-              <div className="card-footer">
-                <span>
-                  <FaThumbsUp /> {issue.upvotes?.length || 0}
-                </span>
-                <span>
-                  <FaCommentDots /> {issue.comments?.length || 0}
-                </span>
+                <h3 className="issue-title">{issue.title}</h3>
+                <p className="issue-description">
+                  {issue.description.length > 100
+                    ? `${issue.description.substring(0, 100)}`
+                    : issue.description}...Read more
+                </p>
+                <p className="location">
+                  <FaMapMarkerAlt /> {issue.location.address}
+                </p>
+                <p className="user">{issue.createdBy.username}</p>
+                <div className="card-footer">
+                  <span>
+                    <FaThumbsUp /> {issue.upvotes?.length || 0}
+                  </span>
+                  <span>
+                    <FaCommentDots /> {issue.comments?.length || 0}
+                  </span>
+                </div>
+                <div className="district">{issue.districtCode}</div>
               </div>
-              <div className="district">{issue.districtCode}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 };

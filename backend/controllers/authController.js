@@ -74,7 +74,7 @@ const register = async (req, res) => {
       message: "User registered successfully",
       token,
       user: {
-        id: newUser._id,
+        _id: newUser._id,
         username: newUser.username,
         email: newUser.email,
         role: newUser.role,
@@ -91,15 +91,9 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
-
-  const result = {
-    status: 0,
-    message: "User successfully logged in",
-    data: {},
-  };
-
   try {
+    const { email, password } = req.body;
+
     const user = await User.findOne({ email }).select("+password");
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -107,28 +101,26 @@ const login = async (req, res) => {
         expiresIn: "24h",
       });
 
-      const resp_data = {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        districtCode: user.districtCode || null,
-        token: token,
-      };
-
-      result.data = resp_data;
-      result.status = 1;
-      res.status(200).json(result);
+      res.status(200).json({
+        message: "User logged in successfully",
+        token,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          districtCode: user.districtCode || null,
+        },
+      });
     } else {
-      result.message = "Invalid email or password";
-      result.status = 0;
-      res.status(401).json(result);
+      res.status(401).json({ message: "Invalid email or password" });
     }
   } catch (error) {
     console.error("Login error:", error);
-    result.message = error.message;
-    result.status = 0;
-    res.status(500).json(result);
+    res.status(500).json({
+      message: "Login failed",
+      error: error.message,
+    });
   }
 };
 

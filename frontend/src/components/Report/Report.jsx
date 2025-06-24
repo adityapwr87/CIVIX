@@ -5,7 +5,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "./Report.css";
-
+import Navbar from "../Navbar/Navbar";
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -183,137 +183,140 @@ const Report = () => {
   };
 
   return (
-    <div className="report-container">
-      <div className="report-content">
-        <h1>Report an Issue</h1>
-        <p className="subtitle">
-          Help improve your community by reporting local problems
-        </p>
+    <div className="report-page">
+      <Navbar />
+      <div className="report-page-container">
+        <div className="report-page-content">
+          <h1 className="report-page-title">Report an Issue</h1>
+          <p className="report-page-subtitle">
+            Help improve your community by reporting local problems
+          </p>
 
-        <form onSubmit={handleSubmit} className="report-form">
-          <div className="form-section">
-            <h2>Issue Details</h2>
+          <form onSubmit={handleSubmit} className="report-page-form">
+            <div className="report-page-section">
+              <h2 className="report-section-title">Issue Details</h2>
 
-            <div className="form-group">
-              <label htmlFor="title">Issue Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Brief description of the problem"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description">Description *</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Provide detailed information about the issue"
-                rows="4"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="districtCode">District Code *</label>
-              <input
-                type="text"
-                id="districtCode"
-                name="districtCode"
-                value={formData.districtCode}
-                onChange={handleInputChange}
-                placeholder="Enter district code (e.g. MH 24)"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="address">Location *</label>
-              <div className="location-input">
+              <div className="report-input-group">
+                <label htmlFor="title">Issue Title *</label>
                 <input
                   type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
+                  id="title"
+                  name="title"
+                  value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="Select location on map"
-                  readOnly // Make it read-only
+                  placeholder="Brief description of the problem"
                   required
                 />
-                <button
-                  type="button"
-                  className="map-button"
-                  onClick={() => setShowMap(!showMap)}
-                >
-                  <FaMapMarkerAlt /> Pick Location on Map
-                </button>
               </div>
-              {showMap && (
-                <div className="map-container">
-                  <MapContainer
-                    center={mapCenter}
-                    zoom={15}
-                    style={{ height: "400px", width: "100%" }}
-                    ref={mapRef}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <LocationMarker
-                      defaultLocation={defaultLocation}
-                      onLocationSelect={handleLocationSelect}
-                    />
-                  </MapContainer>
-                </div>
-              )}
-            </div>
 
-            <div className="form-group">
-              <label htmlFor="images">Images</label>
-              <input
-                type="file"
-                id="images"
-                name="images"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-              />
-              <small>You can upload multiple images (optional)</small>
-              <div className="image-preview-list">
-                {formData.images &&
-                  formData.images.map((img, idx) => (
+              <div className="report-input-group">
+                <label htmlFor="description">Description *</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Provide detailed information about the issue"
+                  rows="4"
+                  required
+                />
+              </div>
+
+              <div className="report-input-group">
+                <label htmlFor="districtCode">District Code *</label>
+                <input
+                  type="text"
+                  id="districtCode"
+                  name="districtCode"
+                  value={formData.districtCode}
+                  onChange={handleInputChange}
+                  placeholder="Enter district code (e.g. MH 24)"
+                  required
+                />
+              </div>
+
+              <div className="report-input-group">
+                <label htmlFor="address">Location *</label>
+                <div className="report-location-wrapper">
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    placeholder="Select location on map"
+                    readOnly
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="report-map-toggle"
+                    onClick={() => setShowMap(!showMap)}
+                  >
+                    <FaMapMarkerAlt /> Pick Location on Map
+                  </button>
+                </div>
+                {showMap && (
+                  <div className="report-map-wrapper">
+                    <MapContainer
+                      center={mapCenter}
+                      zoom={15}
+                      style={{ height: "400px", width: "100%" }}
+                      ref={mapRef}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <LocationMarker
+                        defaultLocation={defaultLocation}
+                        onLocationSelect={handleLocationSelect}
+                      />
+                    </MapContainer>
+                  </div>
+                )}
+              </div>
+
+              <div className="report-input-group">
+                <label htmlFor="images">Images</label>
+                <input
+                  type="file"
+                  id="images"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="report-file-input"
+                />
+                <small className="report-helper-text">
+                  You can upload multiple images (optional)
+                </small>
+                <div className="report-image-preview">
+                  {formData.images?.map((img, idx) => (
                     <img
                       key={idx}
                       src={img}
                       alt={`preview-${idx}`}
-                      style={{
-                        width: 80,
-                        height: 80,
-                        objectFit: "cover",
-                        marginRight: 8,
-                        marginTop: 8,
-                      }}
+                      className="report-preview-image"
                     />
                   ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {error && <div className="error-message">{error}</div>}
+            {error && <div className="report-error">{error}</div>}
 
-          <div className="form-actions">
-            <button type="submit" className="submit-button" disabled={loading}>
-              {loading ? "Submitting..." : "Submit Report"}
-            </button>
-          </div>
-        </form>
+            <div className="report-actions">
+              <button
+                type="submit"
+                className="report-submit"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Report"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

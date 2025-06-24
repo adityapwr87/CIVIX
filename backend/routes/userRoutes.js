@@ -1,7 +1,7 @@
 const express = require("express");
 const { getUserProfile } = require("../controllers/userController");
 const router = express.Router();
-
-router.get("/:userId", getUserProfile);
+const { protect } = require("../middleware/authMiddleware");
+router.get("/:userId", protect, getUserProfile);
 
 module.exports = router;

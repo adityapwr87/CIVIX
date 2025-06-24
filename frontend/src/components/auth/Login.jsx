@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaEnvelope, FaLock } from 'react-icons/fa';
-import './Auth.css';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  FaEnvelope,
+  FaLock,
+  FaArrowLeft,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
+import "./Auth.css";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -22,29 +29,39 @@ const Login = () => {
     e.preventDefault();
     // Add your login logic here
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
-
+      console.log("Login response:", data.user);
       if (response.ok) {
-        localStorage.setItem('token', data.token);
-        navigate('/dashboard');
+        console.log("Login response:", data.user);
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/dashboard");
       } else {
         setError(data.message);
       }
     } catch (err) {
-      setError('Failed to login. Please try again.');
+      setError("Failed to login. Please try again.");
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
     <div className="auth-container">
+      <button onClick={() => navigate("/")} className="back-home">
+        <FaArrowLeft /> Back to Home
+      </button>
       <div className="auth-card">
         <h2>Welcome Back</h2>
         <p className="auth-subtitle">Please enter your details to sign in</p>
@@ -70,23 +87,22 @@ const Login = () => {
             <div className="input-icon">
               <FaLock />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={togglePasswordVisibility}
+                tabIndex="-1"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
-          </div>
-
-          <div className="form-group remember-forgot">
-            <label className="remember-me">
-              <input type="checkbox" /> Remember me
-            </label>
-            <Link to="/forgot-password" className="forgot-password">
-              Forgot password?
-            </Link>
           </div>
 
           <button type="submit" className="auth-button">
@@ -95,7 +111,7 @@ const Login = () => {
         </form>
 
         <p className="auth-footer">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <Link to="/register" className="auth-link">
             Sign up
           </Link>

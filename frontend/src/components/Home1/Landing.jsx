@@ -48,8 +48,8 @@ const Landing = () => {
         </section>
 
         <section className="cta">
-          <h2>Ready to improve your community?</h2>
-          <p>Join thousands of citizens making a difference in their neighborhoods.</p>
+          <h2 className='footer-heading'>Ready to improve your community?</h2>
+          <p className="footer-heading">Join thousands of citizens making a difference in their neighborhoods.</p>
           <button onClick={() => navigate('/register')} className="btn-primary">Sign Up Now</button>
         </section>
       </main>

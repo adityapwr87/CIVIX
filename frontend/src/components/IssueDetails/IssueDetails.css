@@ -74,6 +74,9 @@
   gap: 12px;
   max-height: 600px; /* Add max height */
 }
+.issue-detail-image{
+  padding-bottom: 0px;
+}
 
 .issue-image-large {
   width: 100%;

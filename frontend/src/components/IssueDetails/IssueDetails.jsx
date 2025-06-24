@@ -113,7 +113,7 @@ const IssueDetails = () => {
             </span>
           </div>
           <h1 className="issue-title">{issue.title}</h1>
-          <div className="issue-image-container">
+          <div className="issue-image-container issue-detail-image">
             {issue.images && issue.images.length > 0 ? (
               <>
                 <div className="issue-image-large">

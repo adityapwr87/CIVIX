@@ -15,24 +15,57 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    districtCode: { type: String },
-    reports: [{ type: mongoose.Schema.Types.ObjectId, ref: "Issue" }],
+    districtCode: String,
+    employeeId: String,
+
+    // Change issue tracking arrays to use proper references
+    reports: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Issue",
+      },
+    ],
+
+    unsolvedIssues: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Issue",
+      },
+    ],
+
+    inProgressIssues: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Issue",
+      },
+    ],
+
+    solvedIssues: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Issue",
+      },
+    ],
+
     comments: [
       {
         issue: { type: mongoose.Schema.Types.ObjectId, ref: "Issue" },
         text: String,
-        createdAt: Date,
+        createdAt: { type: Date, default: Date.now },
       },
     ],
+
+    lastActive: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
 
-// Add password hashing middleware
+// Password hashing middleware
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);

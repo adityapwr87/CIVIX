@@ -4,7 +4,7 @@ const Issue = require("../models/Issue");
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
-      .select("username email createdAt comments reports")
+      .select("_id username email createdAt comments reports") // ⬅️ Added _id here
       .populate({
         path: "reports",
         select: "title status upvotes comments createdAt",
@@ -12,11 +12,12 @@ const getUserProfile = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Calculate stats
-    const totalUpvotes = user.reports.reduce((sum, issue) => sum + (issue.upvotes?.length || 0), 0);
+    const totalUpvotes = user.reports.reduce(
+      (sum, issue) => sum + (issue.upvotes?.length || 0),
+      0
+    );
     const commentsCount = user.comments.length;
 
-    // Get recent comments with issue info
     const commentsWithIssue = await Promise.all(
       user.comments.map(async (c) => {
         const issue = await Issue.findById(c.issue).select("title status");
@@ -25,6 +26,7 @@ const getUserProfile = async (req, res) => {
     );
 
     res.json({
+      _id: user._id, // Optional: Explicitly include _id (even though selected above)
       username: user.username,
       email: user.email,
       joined: user.createdAt,

@@ -10,6 +10,14 @@ const createIssue = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
+    // First check if admin exists for the district
+    const admin = await User.findOne({ role: "admin", districtCode });
+    if (!admin) {
+      return res.status(404).json({
+        message: "No admin found for this district. Cannot create issue.",
+      });
+    }
+
     // Upload images to S3 and get URLs
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
@@ -23,7 +31,7 @@ const createIssue = async (req, res) => {
       images: imageUrls,
       location: {
         type: "Point",
-        coordinates: JSON.parse(coordinates), // coordinates should be sent as JSON string
+        coordinates: JSON.parse(coordinates),
         address: address || "",
       },
       districtCode,
@@ -32,25 +40,29 @@ const createIssue = async (req, res) => {
 
     await newIssue.save();
 
-    await User.findByIdAndUpdate(req.user._id, {
-      $push: { reports: newIssue._id },
+    // Update user and admin documents
+    const [updatedUser, updatedAdmin] = await Promise.all([
+      User.findByIdAndUpdate(
+        req.user._id,
+        { $push: { reports: newIssue._id } },
+        { new: true }
+      ),
+      User.findByIdAndUpdate(
+        admin._id,
+        { $push: { unsolvedIssues: newIssue._id } },
+        { new: true }
+      ),
+    ]);
+
+    // Populate the createdBy field for the response
+    await newIssue.populate("createdBy", "username email");
+
+    res.status(201).json({
+      message: "Issue reported successfully",
+      issue: newIssue,
     });
-
-    const admin = await User.findOneAndUpdate(
-      { role: "admin", districtCode },
-      { $push: { unsolvedIssues: newIssue._id } }
-    );
-
-    if (!admin) {
-      return res
-        .status(404)
-        .json({ message: "Admin for this district not found." });
-    }
-
-    res
-      .status(201)
-      .json({ message: "Issue reported successfully", issue: newIssue });
   } catch (error) {
+    console.error("Create issue error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -93,9 +105,8 @@ const getUserIssues = async (req, res) => {
       const stats = {
         total: issues.length,
         unsolved: issues.filter((issue) => issue.status === "unsolved").length,
-        inProgress: issues.filter(
-          (issue) => issue.status === "in progress"
-        ).length,
+        inProgress: issues.filter((issue) => issue.status === "in progress")
+          .length,
         solved: issues.filter((issue) => issue.status === "solved").length,
       };
 
@@ -217,7 +228,7 @@ const getIssueById = async (req, res) => {
       .populate("createdBy", "username email _id")
       .populate({
         path: "comments.user",
-        select: "username email _id"
+        select: "username email _id",
       });
     if (!issue) return res.status(404).json({ message: "Issue not found" });
     res.json(issue);
@@ -229,7 +240,8 @@ const getIssueById = async (req, res) => {
 const addComment = async (req, res) => {
   try {
     const { text } = req.body;
-    if (!text) return res.status(400).json({ message: "Comment text required" });
+    if (!text)
+      return res.status(400).json({ message: "Comment text required" });
 
     const issue = await Issue.findById(req.params.id);
     if (!issue) return res.status(404).json({ message: "Issue not found" });
@@ -246,16 +258,20 @@ const addComment = async (req, res) => {
 
     // Add to user
     await User.findByIdAndUpdate(req.user._id, {
-      $push: { comments: { issue: issue._id, text, createdAt: comment.createdAt } },
+      $push: {
+        comments: { issue: issue._id, text, createdAt: comment.createdAt },
+      },
     });
 
     // Populate the user field for the new comment
     await issue.populate({
       path: "comments.user",
-      select: "username email _id"
+      select: "username email _id",
     });
 
-    res.status(201).json({ comment: issue.comments[issue.comments.length - 1] });
+    res
+      .status(201)
+      .json({ comment: issue.comments[issue.comments.length - 1] });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -269,7 +285,7 @@ const toggleUpvote = async (req, res) => {
     }
 
     const upvoteIndex = issue.upvotes.indexOf(req.user._id);
-    
+
     if (upvoteIndex === -1) {
       // Add upvote
       issue.upvotes.push(req.user._id);
