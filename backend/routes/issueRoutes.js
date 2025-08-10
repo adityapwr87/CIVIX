@@ -14,11 +14,12 @@ const {
 } = require("../controllers/issueController");
 
 // Public routes
-router.get("/all", getAllIssues);
-router.get("/:id", getIssueById);
+
 
 // Protected routes
 router.use(protect);
+router.get("/all", getAllIssues);
+router.get("/:id", getIssueById);
 router.post("/", upload.array("images"), createIssue);
 router.get("/my-issues", getUserIssues);
 router.get("/stats", getIssueStats);

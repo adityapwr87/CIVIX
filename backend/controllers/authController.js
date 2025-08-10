@@ -80,6 +80,7 @@ const register = async (req, res) => {
         role: newUser.role,
         districtCode: newUser.districtCode || null,
       },
+      details:newUser,
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -111,6 +112,7 @@ const login = async (req, res) => {
           role: user.role,
           districtCode: user.districtCode || null,
         },
+        details: user,
       });
     } else {
       res.status(401).json({ message: "Invalid email or password" });

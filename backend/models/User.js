@@ -18,7 +18,16 @@ const userSchema = new mongoose.Schema(
     districtCode: String,
     employeeId: String,
 
-    // Change issue tracking arrays to use proper references
+    profileImage: {
+      type: String, // e.g., URL to S3 or server path
+      default: "", // Optional: set a default avatar URL if needed
+    },
+
+    bio: {
+      type: String,
+      maxlength: 300, // Limit to 300 chars if desired
+    },
+
     reports: [
       {
         type: mongoose.Schema.Types.ObjectId,

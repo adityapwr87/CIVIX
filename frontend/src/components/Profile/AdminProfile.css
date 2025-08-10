@@ -1,0 +1,235 @@
+.admin-profile-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 40px 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  max-width: 1200px; /* Increased from 1000px */
+  width: 100%;
+  margin: 80px auto 32px;
+  padding: 0 20px;
+}
+
+.admin-profile-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 0;
+  max-width: 100%; /* Allow card to use full container width */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.admin-profile-header {
+  width: 100%; /* Make header take full width of the card/container */
+  box-sizing: border-box;
+  /* Keep your existing styles */
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.admin-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.admin-avatar-placeholder img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.admin-profile-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.admin-profile-details h2 {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #111827;
+  letter-spacing: -0.025em;
+  text-align: left;
+}
+
+.admin-profile-details p {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 12px 0;
+  font-weight: 400;
+}
+
+.admin-profile-details span {
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.profile-action-btn {
+  background: black;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-action-btn:hover {
+  background: #1e40af;
+}
+
+.chat-btn {
+  position: absolute;
+  right: 32px;
+  top: 32px;
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.chat-btn:hover {
+  background: #374151;
+}
+
+.admin-profile-info {
+  width: 100%;
+  margin-top: 18px;
+  padding-left: 32px; /* Add this for left padding */
+}
+
+.admin-profile-info h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #2563eb;
+  text-align: left;
+}
+
+.admin-profile-info table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-profile-info td {
+  padding: 8px 0;
+  font-size: 1rem;
+  color: #22223b;
+}
+
+.admin-profile-info td:first-child {
+  font-weight: 500;
+  color: #4b5563;
+  padding-right: 12px;
+}
+
+.logout-btn {
+  margin-top: 32px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #b91c1c;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .admin-profile-card {
+    padding: 20px 8px;
+    max-width: 98vw;
+  }
+  .admin-profile-info h3 {
+    text-align: center;
+  }
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .profile-header-details {
+    align-items: center;
+    width: 100%;
+  }
+}
+
+/* Responsive: stack vertically on small screens */
+@media (max-width: 700px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 6px;
+  }
+  .admin-profile-image {
+    min-width: 0;
+  }
+  .profile-header-details {
+    align-items: center;
+    width: 100%;
+  }
+}
+.admin-profile-stats {
+  padding-left: 10px;
+}
+
+@media (max-width: 768px) {
+  .admin-profile-header {
+    flex-direction: column;
+  }
+  .chat-btn {
+    position: static;
+    margin-top: 16px;
+    align-self: flex-start;
+  }
+}

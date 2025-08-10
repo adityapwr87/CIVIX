@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "./Report.css";
 import Navbar from "../Navbar/Navbar";
+import { addIssue } from "../../services/api";
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -160,19 +161,14 @@ const Report = () => {
       data.append("districtCode", formData.districtCode);
       imageFiles.forEach((file) => data.append("images", file));
 
-      const response = await fetch("http://localhost:5000/api/issues", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: data,
-      });
+      const response = await addIssue(data); 
 
-      const result = await response.json();
+      const result = response.data; 
 
-      if (!response.ok) {
+      if (!response.status || response.status >= 400) {
         throw new Error(result.message || "Failed to submit issue");
       }
+
 
       navigate("/dashboard");
     } catch (err) {

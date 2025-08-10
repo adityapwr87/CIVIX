@@ -4,8 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Chat.css"; // External CSS
 import Navbar from "../Navbar/Navbar";
-
-const socket = io("http://localhost:5000");
+import { getChatMessages } from "../../services/api";
+const socket = io("https://localhost:5000");
 
 const Chat = () => {
   const location = useLocation();
@@ -24,12 +24,16 @@ const Chat = () => {
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/messages/${currentUser._id}/${receiverUser._id}`
+        const res = await getChatMessages(
+          currentUser._id,
+          receiverUser._id
         );
         setChat(res.data);
       } catch (err) {
-        console.error("Failed to load chat history:", err);
+        console.error(
+          "Failed to load chat history:",
+          err.response?.data || err.message
+        );
       }
     };
 

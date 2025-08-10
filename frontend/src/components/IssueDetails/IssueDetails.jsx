@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { addComment } from "../../services/api"; 
+import { getIssueById } from "../../services/api";
+import { upvoteIssue } from "../../services/api";
 import {
   FaMapMarkerAlt,
   FaThumbsUp,
@@ -23,14 +26,22 @@ const IssueDetails = () => {
   const userId = JSON.parse(localStorage.getItem("user"))._id;
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/issues/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setIssue(data);
+    const fetchIssue = async () => {
+      try {
+        const res = await getIssueById(id);
+        setIssue(res.data);
+      } catch (err) {
+        console.error(
+          "Failed to load issue:",
+          err.response?.data || err.message
+        );
+      } finally {
         setLoading(false);
-      });
-  }, [id]);
+      }
+    };
 
+    if (id) fetchIssue();
+  }, [id]);
   useEffect(() => {
     if (issue) {
       setHasUpvoted(issue.upvotes.includes(userId));
@@ -39,47 +50,39 @@ const IssueDetails = () => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:5000/api/issues/${id}/comments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ text: comment }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+
+    try {
+      const res = await addComment(id, comment); 
+      const data = res.data;
+
       setIssue((prev) => ({
         ...prev,
         comments: [...prev.comments, data.comment],
       }));
       setComment("");
+    } catch (err) {
+      console.error(
+        "Error submitting comment:",
+        err.response?.data?.message || err.message
+      );
     }
   };
 
   const handleUpvote = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/issues/${id}/upvote`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await upvoteIssue(id); // Axios sends token via interceptor
 
-      if (res.ok) {
-        const data = await res.json();
+      if (res.status === 200) {
         setIssue((prev) => ({
           ...prev,
           upvotes: hasUpvoted
-            ? prev.upvotes.filter((id) => id !== userId)
+            ? prev.upvotes.filter((uid) => uid !== userId)
             : [...prev.upvotes, userId],
         }));
         setHasUpvoted(!hasUpvoted);
       }
     } catch (error) {
-      console.error("Error upvoting:", error);
+      console.error("Error upvoting:", error.response?.data || error.message);
     }
   };
 
@@ -94,6 +97,15 @@ const IssueDetails = () => {
       prev === issue.images.length - 1 ? 0 : prev + 1
     );
   };
+  const handleViewLocation = () => {
+    const coords = issue.location?.coordinates;
+    if (Array.isArray(coords) && coords.length === 2) {
+      const [lng, lat] = coords;
+      window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank");
+    } else {
+      alert("Location not available.");
+    }
+  };
 
   if (loading) return <div>Loading...</div>;
   if (!issue) return <div>Issue not found</div>;
@@ -103,10 +115,18 @@ const IssueDetails = () => {
       <Navbar />
       <div className="issue-details-container">
         <div className="issue-main-card">
-          <div className="issue-header-row">
-            <span className={`status-badge ${issue.status}`}>
-              {issue.status}
-            </span>
+          <div className="issue-header-row1">
+            <div className="status-section1">
+              <div className={`status-badge1 ${issue.status}`}>
+                {issue.status}
+              </div>
+              <button
+                className="view-location-btn"
+                onClick={handleViewLocation}
+              >
+                📍 View Location
+              </button>
+            </div>
             <span className="issue-district">
               {issue.location?.address?.split(",").pop()?.trim() ||
                 issue.districtCode}

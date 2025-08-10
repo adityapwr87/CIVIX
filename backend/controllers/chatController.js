@@ -21,7 +21,7 @@ exports.getChatHistory = async (req, res) => {
 
     const users = await User.find({
       _id: { $in: Array.from(uniqueUserIds) },
-    }).select("_id username");
+    }).select("_id username profileImage");
 
     res.json(users);
   } catch (error) {

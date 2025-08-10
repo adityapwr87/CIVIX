@@ -10,6 +10,7 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import "./Auth.css";
+import {  register, } from "../../services/api"; 
 
 const Register = () => {
   const navigate = useNavigate();
@@ -56,25 +57,17 @@ const Register = () => {
         requestBody.districtCode = formData.districtCode;
       }
 
-      const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await register(requestBody);
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/dashboard");
-      } else {
-        setError(data.message);
-      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("details", JSON.stringify(data.details));
+      navigate("/dashboard");
     } catch (err) {
-      setError("Failed to register. Please try again.");
+      setError(
+        err.response?.data?.message || "Failed to register. Please try again."
+      );
     }
   };
 

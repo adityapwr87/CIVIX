@@ -8,6 +8,7 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import "./Auth.css";
+import { login } from "../../services/api"; 
 
 const Login = () => {
   const navigate = useNavigate();
@@ -29,27 +30,21 @@ const Login = () => {
     e.preventDefault();
     // Add your login logic here
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await login(formData); // POST /auth/login
+      const data = response.data;
 
-      const data = await response.json();
       console.log("Login response:", data.user);
-      if (response.ok) {
-        console.log("Login response:", data.user);
 
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/dashboard");
-      } else {
-        setError(data.message);
-      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("details", JSON.stringify(data.details));
+
+      navigate("/dashboard");
     } catch (err) {
-      setError("Failed to login. Please try again.");
+      console.error("Login error:", err.response?.data || err.message);
+      setError(
+        err.response?.data?.message || "Failed to login. Please try again."
+      );
     }
   };
 

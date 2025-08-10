@@ -4,6 +4,7 @@
   max-width: 1000px;
   margin: 80px auto 32px; /* Added top margin to account for navbar */
   padding: 0 20px;
+  margin-top: 100px;;
 }
 
 .issue-details-layout {
@@ -24,40 +25,100 @@
   padding: 1.5rem;
 }
 
-.issue-header-row {
+.issue-header-row2 {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
-.status-badge {
-  padding: 4px 10px;
+.status-section2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.status-badge1 {
+  display: inline-block;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
+  padding: 4px 10px;
 }
 
-.status-badge.unsolved {
+.status-badge1.unsolved {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.status-badge.in\ progress {
+.status-badge1.in\ progress {
   background-color: #fefce8;
   color: #ca8a04;
 }
 
-.status-badge.solved {
+.status-badge1.solved {
   background-color: #ecfdf5;
   color: #16a34a;
 }
 
-.issue-district {
+.change-status-btn,
+.view-location-btn {
+  background-color: #8d8bae;
+  color: black;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.change-status-btn:hover,
+.view-location-btn:hover {
+  background-color: #4338ca;
+}
+
+.status-dropdown {
+  position: absolute;
+  top: 120%;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 100;
+}
+
+.status-dropdown button {
+  padding: 8px 12px;
+  text-align: left;
+  background: white;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.status-dropdown button:hover {
+  background-color: #f3f4f6;
+}
+
+.issue-district2 {
   font-size: 0.9rem;
   color: #666;
+  white-space: nowrap;
 }
+
+
 
 .issue-title {
   font-size: 1.6rem;

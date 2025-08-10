@@ -24,32 +24,39 @@
   padding: 1.5rem;
 }
 
-.issue-header-row {
+.issue-header-row1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }
 
-.status-badge {
-  padding: 4px 10px;
+.status-section1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge1 {
+  display: inline-block;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
+  padding: 4px 10px;
 }
 
-.status-badge.unsolved {
+.status-badge1.unsolved {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.status-badge.in\ progress {
+.status-badge1.in\ progress {
   background-color: #fefce8;
   color: #ca8a04;
 }
 
-.status-badge.solved {
+.status-badge1.solved {
   background-color: #ecfdf5;
   color: #16a34a;
 }
@@ -58,6 +65,7 @@
   font-size: 0.9rem;
   color: #666;
 }
+
 
 .issue-title {
   font-size: 1.6rem;

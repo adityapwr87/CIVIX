@@ -1,256 +1,279 @@
 /* Base Font Settings */
 .user-profile-container {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      sans-serif;
-    max-width: 1000px;
-    margin: 80px auto 32px; /* Added top margin to account for navbar */
-    padding: 0 20px;
-  }
-  
-  /* Profile Header */
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  max-width: 1000px;
+  margin: 80px auto 32px; /* Added top margin to account for navbar */
+  padding: 0 20px;
+}
+
+/* Profile Header */
+.profile-header {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.profile-header h2 {
+  font-family: "Inter", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #111827;
+  letter-spacing: -0.025em;
+  text-align: left;
+  margin-left: 0;
+}
+
+.profile-header p {
+  font-family: "Inter", sans-serif;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 12px 0;
+  font-weight: 400;
+}
+
+.profile-header span {
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-btn {
+  position: absolute;
+  right: 32px;
+  top: 32px;
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.chat-btn:hover {
+  background: #374151;
+}
+
+/* Profile Stats */
+.profile-stats {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 32px;
+  display: flex;
+  gap: 48px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.profile-stats span {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.profile-stats b {
+  font-family: "Inter", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #111827;
+}
+
+/* Color the stats differently */
+.profile-stats span:nth-child(1) b {
+  color: #2563eb;
+}
+.profile-stats span:nth-child(2) b {
+  color: #059669;
+}
+.profile-stats span:nth-child(3) b {
+  color: #7c3aed;
+}
+
+/* Profile Tabs */
+.profile-tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.profile-tabs button {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 24px;
+  background: #fff;
+  border: none;
+  border-radius: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-tabs button.active {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Reported Issues & User Comments */
+.reported-issues-list,
+.user-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.issue-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.issue-card .status-badge {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.status-badge.reported {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.status-badge.in-progress {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.status-badge.resolved {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.issue-card a {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #111827;
+  text-decoration: none;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.issue-card div {
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* Comment Cards */
+.comment-card {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.comment-card a {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.comment-card div:nth-child(2) {
+  color: #374151;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.comment-card div:last-child {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.profile-action-btn {
+  background: black;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-action-btn:hover {
+  background: #1e40af;
+}
+
+@media (max-width: 768px) {
   .profile-header {
-    background: #fff;
-    border-radius: 16px;
-    padding: 32px;
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    margin-bottom: 24px;
-    position: relative;
+    flex-direction: column;
   }
-  
-  .avatar-placeholder {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: #f0f0f0;
-    flex-shrink: 0;
-  }
-  
-  .profile-header h2 {
-    font-family: "Inter", sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    color: #111827;
-    letter-spacing: -0.025em;
-  }
-  
-  .profile-header p {
-    font-family: "Inter", sans-serif;
-    color: #4b5563;
-    font-size: 15px;
-    line-height: 1.6;
-    margin: 0 0 12px 0;
-    font-weight: 400;
-  }
-  
-  .profile-header span {
-    color: #6b7280;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
+
   .chat-btn {
-    position: absolute;
-    right: 32px;
-    top: 32px;
-    background: #111827;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    transition: background-color 0.2s;
+    position: static;
+    margin-top: 16px;
+    align-self: flex-start;
   }
-  
-  .chat-btn:hover {
-    background: #374151;
-  }
-  
-  /* Profile Stats */
+
   .profile-stats {
-    background: #fff;
-    border-radius: 16px;
-    padding: 24px 32px;
-    display: flex;
-    gap: 48px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    margin-bottom: 24px;
-  }
-  
-  .profile-stats span {
-    font-family: "Inter", sans-serif;
-    font-size: 15px;
-    font-weight: 400;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #6b7280;
-  }
-  
-  .profile-stats b {
-    font-family: "Inter", sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    color: #111827;
-  }
-  
-  /* Color the stats differently */
-  .profile-stats span:nth-child(1) b {
-    color: #2563eb;
-  }
-  .profile-stats span:nth-child(2) b {
-    color: #059669;
-  }
-  .profile-stats span:nth-child(3) b {
-    color: #7c3aed;
-  }
-  
-  /* Profile Tabs */
-  .profile-tabs {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  
-  .profile-tabs button {
-    font-family: "Inter", sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    padding: 12px 24px;
-    background: #fff;
-    border: none;
-    border-radius: 12px;
-    color: #6b7280;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .profile-tabs button.active {
-    background: #f3f4f6;
-    color: #111827;
-  }
-  
-  /* Reported Issues & User Comments */
-  .reported-issues-list,
-  .user-comments-list {
-    display: flex;
     flex-direction: column;
     gap: 16px;
   }
-  
-  .issue-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  .profile-tabs {
+    overflow-x: auto;
+    padding-bottom: 8px;
   }
-  
-  .issue-card .status-badge {
-    font-family: "Inter", sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 12px;
+
+  .profile-tabs button {
+    white-space: nowrap;
   }
-  
-  .status-badge.reported {
-    background: #fef2f2;
-    color: #dc2626;
-  }
-  
-  .status-badge.in-progress {
-    background: #fffbeb;
-    color: #d97706;
-  }
-  
-  .status-badge.resolved {
-    background: #ecfdf5;
-    color: #059669;
-  }
-  
-  .issue-card a {
-    font-family: "Inter", sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: #111827;
-    text-decoration: none;
-    margin-bottom: 8px;
-    display: block;
-  }
-  
-  .issue-card div {
-    color: #6b7280;
-    font-size: 14px;
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
-  }
-  
-  /* Comment Cards */
-  .comment-card {
-    background: #f9fafb;
-    border-radius: 12px;
-    padding: 16px;
-  }
-  
-  .comment-card a {
-    font-family: "Inter", sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: #2563eb;
-    text-decoration: none;
-    margin-bottom: 8px;
-    display: block;
-  }
-  
-  .comment-card div:nth-child(2) {
-    color: #374151;
-    font-size: 14px;
-    margin: 8px 0;
-  }
-  
-  .comment-card div:last-child {
-    color: #6b7280;
-    font-size: 13px;
-  }
-  
-  @media (max-width: 768px) {
-    .profile-header {
-      flex-direction: column;
-    }
-  
-    .chat-btn {
-      position: static;
-      margin-top: 16px;
-      align-self: flex-start;
-    }
-  
-    .profile-stats {
-      flex-direction: column;
-      gap: 16px;
-    }
-  
-    .profile-tabs {
-      overflow-x: auto;
-      padding-bottom: 8px;
-    }
-  
-    .profile-tabs button {
-      white-space: nowrap;
-    }
-  }
-  
+}

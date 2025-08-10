@@ -6,7 +6,7 @@
   const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
-
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     return (
       <nav className="navbar">
         <div className="navbar-container">
@@ -23,14 +23,16 @@
             >
               <FaHome /> Issues
             </Link>
-            <Link
-              to="/report"
-              className={`nav-link ${
-                location.pathname === "/report" ? "active" : ""
-              }`}
-            >
-              <FaPlus /> Report
-            </Link>
+            {user.role === "user" && (
+              <Link
+                to="/report"
+                className={`nav-link ${
+                  location.pathname === "/report" ? "active" : ""
+                }`}
+              >
+                <FaPlus /> Report
+              </Link>
+            )}
             <Link
               to="/chat-history"
               className={`nav-link ${
@@ -42,7 +44,7 @@
           </div>
 
           <div className="user-profile">
-            <button onClick={() => navigate("/profile")} className="profile-button">
+            <button onClick={() => {if (user.role==='user'){ navigate("/profile")} else navigate("/admin/profile")}} className="profile-button">
               <FaUser />
             </button>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAllIssues } from "../../services/api";
 import "./Home.css";
 import {
   FaThumbsUp,
@@ -66,22 +67,11 @@ const Home = () => {
 
   const fetchIssues = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/issues/all", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch issues");
-      }
-
-      const data = await response.json();
-      setIssues(data);
+      const response = await getAllIssues(); // Axios handles token via interceptor
+      setIssues(response.data);
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
       setLoading(false);
     }
   };
@@ -126,7 +116,7 @@ const Home = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All Status</option>
-              <option value="reported">Reported</option>
+              <option value="unsolved">unsolved</option>
               <option value="in progress">In Progress</option>
               <option value="solved">Solved</option>
             </select>

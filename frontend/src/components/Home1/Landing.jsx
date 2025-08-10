@@ -1,15 +1,26 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import  { useEffect } from "react";
 import { FaMapMarkerAlt, FaUsers, FaClipboardCheck } from 'react-icons/fa';
 import './Landing.css';
 
 const Landing = () => {
   const navigate = useNavigate();
+  
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  useEffect(() => {
+    if (token && user) {
+      navigate("/dashboard");
+    }
+  }, [token, user, navigate]);
+
 
   return (
     <div className="landing-container">
       <nav className="landing-nav">
-        <div className="logo">CivicTracker</div>
+        <div className="logo">CiviX</div>
         <div className="nav-buttons">
           <button onClick={() => navigate('/login')} className="btn-secondary">Login</button>
           <button onClick={() => navigate('/register')} className="btn-primary">Sign Up</button>

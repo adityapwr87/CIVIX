@@ -12,6 +12,7 @@ import AboutUs from "./components/About/AboutUs";
 import Chat from "./components/Chat/Chat";
 import ChatHistory from "./components/Chat/ChatHistory";
 import Profile from "./components/Profile/Profile";
+import AdminProfile from "./components/Profile/AdminProfile";
 function App() {
   const DashboardRoute = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -41,7 +42,8 @@ function App() {
           <Route path="/admin/issue/:id" element={<AdminIssueDetails />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat-history" element={<ChatHistory />} />
-          <Route path='profile' element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin/profile" element={<AdminProfile />} />
         </Routes>
       </div>
     </Router>

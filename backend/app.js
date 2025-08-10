@@ -13,7 +13,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/issues", issueRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/messages", require("./routes/messages"));
-app.use("/chat-history", chatRoutes);
+app.use("/api/messages", require("./routes/messages"));
+app.use("/api/chat-history", chatRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Backend is running and HTTPS is working!");
+});
 
 module.exports = app;

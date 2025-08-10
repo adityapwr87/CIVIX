@@ -1,10 +1,12 @@
 const User = require("../models/User");
 const Issue = require("../models/Issue");
-
+const uploadtos3 = require("../utils/s3Upload"); // Assuming this is a utility function to handle S3 uploads
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
-      .select("_id username email createdAt comments reports") // ⬅️ Added _id here
+      .select(
+        "_id username email createdAt comments reports bio profileImage unsolvedIssues inProgressIssues solvedIssues"
+      )
       .populate({
         path: "reports",
         select: "title status upvotes comments createdAt",
@@ -26,19 +28,57 @@ const getUserProfile = async (req, res) => {
     );
 
     res.json({
-      _id: user._id, // Optional: Explicitly include _id (even though selected above)
+      _id: user._id,
       username: user.username,
       email: user.email,
       joined: user.createdAt,
-      issuesReported: user.reports.length,
-      commentsCount,
+      issuesReported: (user.reports || []).length,
+      commentsCount: (user.comments || []).length,
       totalUpvotes,
-      reportedIssues: user.reports,
+      reportedIssues: user.reports || [],
       comments: commentsWithIssue,
+      bio: user.bio || "",
+      profileImage: user.profileImage,
+      unsolvedCount: (user.unsolvedIssues || []).length,
+      inProgressCount: (user.inProgressIssues || []).length,
+      solvedCount: (user.solvedIssues || []).length,
+      districtCode:user.districtCode
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-module.exports = { getUserProfile };
+const updateProfilePic = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    console.log("Received file:", req.file);
+    if (req.file) {
+      user.profileImage = await uploadtos3(req.file);
+    }
+
+    await user.save();
+    res.json({ message: "Profile picture updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+const updateUserBio = async (req, res) => {
+  try {
+    const { bio } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.bio = bio;
+    await user.save();
+
+    res.json({ message: "Bio updated successfully", bio: user.bio });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+module.exports = { getUserProfile, updateProfilePic, updateUserBio };
