@@ -8,7 +8,6 @@ import { getChatMessages } from "../../services/api";
 const socket = io("https://civix-kvyp.onrender.com", {
   transports: ["websocket"],
   secure: true,
-  rejectUnauthorized: false, // For self-signed certs, but not needed for Render
 });
 
 const Chat = () => {
