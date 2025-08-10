@@ -6,7 +6,12 @@ const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://civix-1-frontend-2.onrender.com",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
