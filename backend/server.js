@@ -13,7 +13,7 @@ const privateKey = fs.readFileSync("certs/privkey.pem", "utf8"); // <-- Update p
 const certificate = fs.readFileSync("certs/cert.pem", "utf8"); // <-- Update path as needed
 const credentials = { key: privateKey, cert: certificate };
 
-const server = https.createServer(credentials, app);
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
