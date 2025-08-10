@@ -104,7 +104,7 @@ const AdminIssueDetails = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `https://civix-kvyp.onrender.com/api/admin/issues/${id}/status`,
+        `http://localhost:5000/api/admin/issues/${id}/status`,
         {
           method: "PATCH",
           headers: {
