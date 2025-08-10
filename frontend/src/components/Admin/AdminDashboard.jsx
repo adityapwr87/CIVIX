@@ -19,7 +19,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/admin/district/${user.districtCode}/issues`,
+        `https://civix-2-backend.onrender.com/api/admin/district/${user.districtCode}/issues`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
