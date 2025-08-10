@@ -1,8 +1,7 @@
 import axios from "axios";
 
 // Set up the base URL for the backend API
-const API = axios.create({ baseURL: "https://localhost:5000/api" });
-
+const API = axios.create({ baseURL: "https://civix-kvyp.onrender.com/api" });
 // Automatically attach token from localStorage
 API.interceptors.request.use(
   (config) => {
