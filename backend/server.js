@@ -17,7 +17,11 @@ const server = https.createServer(credentials, app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://localhost:3000"],
+    origin: [
+      "https://civix-1-frontend-2.onrender.com",
+      "http://localhost:3000",
+      "https://localhost:3000",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
