@@ -1,7 +1,8 @@
 import axios from "axios";
-
 // Set up the base URL for the backend API
-const API = axios.create({ baseURL: "https://civix-2-backend.onrender.com/api" });
+const API = axios.create({
+  baseURL: `${process.env.REACT_APP_BACKEND_URL}/api`
+});
 
 // Automatically attach token from localStorage
 API.interceptors.request.use(

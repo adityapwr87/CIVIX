@@ -1,15 +1,18 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const issueRoutes = require("./routes/issueRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const app = express();
-app.use(cors({
-  origin: "https://civix-1-frontend-2.onrender.com",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.frontendurl,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);

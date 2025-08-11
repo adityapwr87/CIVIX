@@ -5,7 +5,9 @@ import axios from "axios";
 import "./Chat.css"; // External CSS
 import Navbar from "../Navbar/Navbar";
 import { getChatMessages } from "../../services/api";
-const socket = io("https://civix-2-backend.onrender.com");
+const socket = io(process.env.REACT_APP_BACKEND_URL);
+
+console.log(process.env.REACT_APP_BACKEND_URL);
 
 const Chat = () => {
   const location = useLocation();

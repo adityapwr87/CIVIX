@@ -104,7 +104,7 @@ const AdminIssueDetails = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `https://civix-2-backend.onrender.com/api/admin/issues/${id}/status`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/issues/${id}/status`,
         {
           method: "PATCH",
           headers: {
@@ -114,6 +114,7 @@ const AdminIssueDetails = () => {
           body: JSON.stringify({ status: newStatus }),
         }
       );
+
 
       if (res.ok) {
         const data = await res.json();
