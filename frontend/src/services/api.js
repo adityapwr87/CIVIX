@@ -1,7 +1,8 @@
 import axios from "axios";
+
 // Set up the base URL for the backend API
 const API = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_URL}/api`
+  baseURL: `${process.env.REACT_APP_BACKEND_URL}/api`,
 });
 
 // Automatically attach token from localStorage
@@ -23,26 +24,26 @@ export const register = (userData) => API.post("/auth/register", userData);
 // User routes
 export const getUserProfile = (userId) => API.get(`users/${userId}`);
 
-//issues
+// Issues
 export const addIssue = (data) => API.post("/issues", data);
 
-//issuedeatils
+// Issue details
 export const addComment = (issueId, commentText) =>
   API.post(`/issues/${issueId}/comments`, { text: commentText });
 export const getIssueById = (id) => API.get(`/issues/${id}`);
 export const upvoteIssue = (id) => API.post(`/issues/${id}/upvote`);
 export const getAllIssues = () => API.get("/issues/all");
 
-//chats 
+// Chats
 export const getChatHistory = () => API.get("/chat-history");
 export const getChatMessages = (senderId, receiverId) =>
   API.get(`/messages/${senderId}/${receiverId}`);
 
+// Admin - now protected
 export const updateIssueStatus = (id, status) =>
-  axios.patch(`api/admin/issues/${id}/status`, {
-    status,
-  });
+  API.patch(`/admin/issues/${id}/status`, { status });
 
+// Profile
 export const updateprofilepic = (file) => {
   console.log("Updating profile picture with file:", file);
   const formData = new FormData();
@@ -58,7 +59,6 @@ export const updateUserBio = (bio) => {
   return API.patch("/users/updateBio", { bio });
 };
 
-
 export default {
   login,
   register,
@@ -69,5 +69,8 @@ export default {
   upvoteIssue,
   getAllIssues,
   getChatHistory,
-  getChatMessages
+  getChatMessages,
+  updateIssueStatus, // also export here for convenience
+  updateprofilepic,
+  updateUserBio,
 };

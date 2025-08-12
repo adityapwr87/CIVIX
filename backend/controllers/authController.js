@@ -5,7 +5,7 @@ const generateToken = require("../utils/generateToken");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const validDistricts = ["MH24", "2", "3"];
+//const validDistricts = ["MH24", "2", "3"];
 const register = async (req, res) => {
   try {
     const {
