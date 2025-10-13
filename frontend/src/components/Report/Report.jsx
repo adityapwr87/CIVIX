@@ -7,6 +7,8 @@ import L from "leaflet";
 import "./Report.css";
 import Navbar from "../Navbar/Navbar";
 import { addIssue } from "../../services/api";
+import { statesAndDistricts } from "../../utils/statesAndDistricts";
+import { toast } from "react-toastify";
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -15,12 +17,13 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 
+// States and districts data (simplified example)
+
+
 function MapCenter({ center }) {
   const map = useMap();
   useEffect(() => {
-    if (center) {
-      map.setView(center);
-    }
+    if (center) map.setView(center);
   }, [center, map]);
   return null;
 }
@@ -29,7 +32,6 @@ function LocationMarker({ defaultLocation, onLocationSelect }) {
   const [position, setPosition] = useState(null);
   const map = useMap();
 
-  // Function to get address from coordinates
   const getAddressFromCoordinates = async (lat, lng) => {
     try {
       const response = await fetch(
@@ -48,8 +50,6 @@ function LocationMarker({ defaultLocation, onLocationSelect }) {
       const newPos = [defaultLocation.lat, defaultLocation.lng];
       setPosition(newPos);
       map.setView(newPos, 15);
-
-      // Get and set initial address
       getAddressFromCoordinates(defaultLocation.lat, defaultLocation.lng).then(
         (address) =>
           onLocationSelect([defaultLocation.lng, defaultLocation.lat], address)
@@ -60,8 +60,6 @@ function LocationMarker({ defaultLocation, onLocationSelect }) {
   useMap().on("click", async (e) => {
     const newPosition = [e.latlng.lat, e.latlng.lng];
     setPosition(newPosition);
-
-    // Get address when location is clicked
     const address = await getAddressFromCoordinates(e.latlng.lat, e.latlng.lng);
     onLocationSelect([e.latlng.lng, e.latlng.lat], address);
   });
@@ -77,15 +75,17 @@ const Report = () => {
     images: [],
     coordinates: [],
     address: "",
-    districtCode: "",
+    state: "",
+    districtName: "",
   });
 
-  const [imageFiles, setImageFiles] = useState([]); // <-- Add this
+  const [districts, setDistricts] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [defaultLocation, setDefaultLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Default to Pune
+  const [mapCenter, setMapCenter] = useState([18.5204, 73.8567]); // Pune default
   const mapRef = useRef(null);
 
   useEffect(() => {
@@ -101,9 +101,8 @@ const Report = () => {
             coordinates: [longitude, latitude],
           }));
         },
-        (error) => {
-          console.error("Error getting location:", error);
-          setDefaultLocation({ lat: 18.5204, lng: 73.8567 }); // Default to Pune
+        () => {
+          setDefaultLocation({ lat: 18.5204, lng: 73.8567 });
         }
       );
     }
@@ -114,69 +113,94 @@ const Report = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+      ...(name === "state" ? { districtName: "" } : {}), // reset district if state changes
     }));
+
+    if (name === "state") {
+      const selectedState = statesAndDistricts.find((s) => s.state === value);
+      setDistricts(selectedState ? selectedState.districts : []);
+    }
   };
 
-  // Update handleLocationSelect to accept address
   const handleLocationSelect = (coordinates, address) => {
     setFormData((prev) => ({
       ...prev,
       coordinates,
-      address: address || prev.address, // Update address if provided
+      address: address || prev.address,
     }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setImageFiles(files); // Save files for submission
+    setImageFiles(files);
     setFormData((prev) => ({
       ...prev,
-      images: files.map((file) => URL.createObjectURL(file)), // For preview only
+      images: files.map((file) => URL.createObjectURL(file)),
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const token = localStorage.getItem("token");
-
-      if (
-        !formData.title ||
-        !formData.description ||
-        !formData.coordinates ||
-        !formData.districtCode
-      ) {
-        throw new Error("Please fill all required fields");
-      }
-
-      // Use FormData for file upload
-      const data = new FormData();
-      data.append("title", formData.title);
-      data.append("description", formData.description);
-      data.append("coordinates", JSON.stringify(formData.coordinates));
-      data.append("address", formData.address);
-      data.append("districtCode", formData.districtCode);
-      imageFiles.forEach((file) => data.append("images", file));
-
-      const response = await addIssue(data); 
-
-      const result = response.data; 
-
-      if (!response.status || response.status >= 400) {
-        throw new Error(result.message || "Failed to submit issue");
-      }
 
 
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    // Validation
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.coordinates ||
+      !formData.state ||
+      !formData.districtName
+    ) {
+      throw new Error("Please fill all required fields");
     }
-  };
+
+    // Prepare FormData
+    const data = new FormData();
+    data.append("title", formData.title);
+    data.append("description", formData.description);
+    data.append("coordinates", JSON.stringify(formData.coordinates));
+    data.append("address", formData.address);
+    data.append("state", formData.state);
+    data.append("districtName", formData.districtName);
+    imageFiles.forEach((file) => data.append("images", file));
+
+    // API call
+    const response = await addIssue(data);
+    const result = response.data;
+
+    if (!response.status || response.status >= 400)
+      throw new Error(result.message || "Failed to submit issue");
+
+    // ✅ Show success toast
+    toast.success(result.message || "Issue submitted successfully!", {
+      position: "top-right",
+      autoClose: 4000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
+    // Navigate after submission
+    navigate("/dashboard");
+  } catch (err) {
+    // ✅ Show error toast
+    toast.error(err.message, {
+      position: "top-right",
+      autoClose: 4000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="report-page">
@@ -219,16 +243,40 @@ const Report = () => {
               </div>
 
               <div className="report-input-group">
-                <label htmlFor="districtCode">District Code *</label>
-                <input
-                  type="text"
-                  id="districtCode"
-                  name="districtCode"
-                  value={formData.districtCode}
+                <label htmlFor="state">State *</label>
+                <select
+                  id="state"
+                  name="state"
+                  value={formData.state}
                   onChange={handleInputChange}
-                  placeholder="Enter district code (e.g. MH 24)"
                   required
-                />
+                >
+                  <option value="">Select state</option>
+                  {statesAndDistricts.map((s) => (
+                    <option key={s.state} value={s.state}>
+                      {s.state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="report-input-group">
+                <label htmlFor="districtName">District *</label>
+                <select
+                  id="districtName"
+                  name="districtName"
+                  value={formData.districtName}
+                  onChange={handleInputChange}
+                  required
+                  disabled={!formData.state}
+                >
+                  <option value="">Select district</option>
+                  {districts.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="report-input-group">
@@ -239,9 +287,8 @@ const Report = () => {
                     id="address"
                     name="address"
                     value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Select location on map"
                     readOnly
+                    placeholder="Select location on map"
                     required
                   />
                   <button

@@ -16,6 +16,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/issues", issueRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);

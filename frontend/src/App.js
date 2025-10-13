@@ -1,4 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import Landing from "./components/Home1/Landing";
 import Home from "./components/Homepage/Home";
 import AdminDashboard from "./components/Admin/AdminDashboard";
@@ -13,41 +24,190 @@ import Chat from "./components/Chat/Chat";
 import ChatHistory from "./components/Chat/ChatHistory";
 import Profile from "./components/Profile/Profile";
 import AdminProfile from "./components/Profile/AdminProfile";
-function App() {
-  const DashboardRoute = () => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const isAuthenticated = localStorage.getItem("token");
+import Notifications from "./components/Notification/Notifications";
 
-    if (!isAuthenticated) return <Navigate to="/login" />;
-    return user.role === "admin" ? <AdminDashboard /> : <Home />;
-  };
+import { socket } from "./socket";
+
+// ----------------------
+// Protected Route
+// ----------------------
+const ProtectedRoute = ({ children, roles }) => {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  if (!token) return <Navigate to="/login" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+
+  return children;
+};
+
+// ----------------------
+// Dashboard Route
+// ----------------------
+const DashboardRoute = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  return user.role === "admin" ? <AdminDashboard /> : <Home />;
+};
+
+// ----------------------
+// Main App Content
+// ----------------------
+function AppContent() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    socket.on("new_chat_message", (data) => {
+      const isOnChatPage = location.pathname.startsWith("/chat");
+
+      if (!isOnChatPage) {
+        toast.info(`New message from ${data.senderName}`, {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false, // ✅ show progress bar
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          style: {
+            border: "2px solid #d32f2f", // red border
+            backgroundColor: "#fff",
+            color: "#d32f2f",
+            fontWeight: "500",
+            borderRadius: "10px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            padding: "12px 16px",
+            fontSize: "15px",
+          },
+          icon: false,
+          progressStyle: { background: "#d32f2f" }, // ✅ red progress bar
+          onClick: () =>
+  navigate("/chat", {
+    state: {
+      currentUser: JSON.parse(localStorage.getItem("user")),
+      receiverUser: { _id: data.sender, username: data.senderName },
+    },
+  }),
+        });
+
+      }
+    });
+
+    return () => socket.off("new_chat_message");
+  }, [location, navigate]);
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-          {/* Role-based dashboard */}
-          <Route path="/dashboard" element={<DashboardRoute />} />
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute roles={["admin", "user"]}>
+              <DashboardRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/report"
+          element={
+            <ProtectedRoute roles={["user"]}>
+              <Report />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/issue/:id"
+          element={
+            <ProtectedRoute roles={["user", "admin"]}>
+              <IssueDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute roles={["user", "admin"]}>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:userId"
+          element={
+            <ProtectedRoute roles={["user", "admin"]}>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/issue/:id"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminIssueDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute roles={["user", "admin"]}>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat-history"
+          element={
+            <ProtectedRoute roles={["user", "admin"]}>
+              <ChatHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute roles={["user"]}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/profile"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminProfile />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
 
-          {/* Regular routes */}
-          <Route path="/report" element={<Report />} />
-          <Route path="/issue/:id" element={<IssueDetails />} />
-          <Route path="/user/:userId" element={<UserProfile />} />
-          <Route path="/admin/issue/:id" element={<AdminIssueDetails />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/chat-history" element={<ChatHistory />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/admin/profile" element={<AdminProfile />} />
-        </Routes>
-      </div>
-    </Router>
+      {/* ✅ Toast Container */}
+      <ToastContainer
+        position="top-right"
+        theme="light"
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        draggable
+        pauseOnHover
+      />
+    </>
   );
 }
 
-export default App;
+// ----------------------
+// Main App Wrapper
+// ----------------------
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}

@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
     districtCode: String,
+    state: String,
+    districtName: String,
     employeeId: String,
 
     profileImage: {

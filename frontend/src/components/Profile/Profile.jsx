@@ -4,7 +4,9 @@ import Navbar from "../Navbar/Navbar";
 import "./Profile.css";
 import { getUserProfile } from "../../services/api";
 import {updateprofilepic} from "../../services/api";
-import { updateUserBio } from "../../services/api"; // Assuming this function exists
+import { updateUserBio } from "../../services/api"; // Assuming this function exists'
+import {socket} from "../../socket";
+import { toast } from "react-toastify";
 const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -39,34 +41,150 @@ const Profile = () => {
       },
     });
   };
-  const handlebiochange = () => {
-    const newBio = prompt("Enter your new bio:", profile.bio || "");
-    if (newBio !== null) {
-      // Call API to update bio
-      updateUserBio(newBio)
-        .then((res) => {
-          console.log("Bio updated successfully");
-          setProfile((prev) => ({ ...prev, bio: newBio }));
-        })
-        .catch((err) => {
-          console.error("Failed to update bio", err);
-        });
-    }
-  };
+const handlebiochange = () => {
+  const newBio = prompt("Enter your new bio:", profile.bio || "");
+  if (newBio !== null) {
 
-  const handleProfilePicChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAvatar(URL.createObjectURL(file));
-      updateprofilepic(file)
-        .then((res) => {
-          console.log("Profile picture updated successfully");
-        })
-        .catch((err) => {
-          console.error("Failed to update profile picture", err);
+    const toastid = toast.info("Updating bio...", {
+      position: "top-right",
+      autoClose: false,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      style: {
+        border: "2px solid #d32f2f",
+        backgroundColor: "#fff",
+        color: "#d32f2f",
+        borderRadius: "10px",
+        fontWeight: "500",
+        padding: "12px 16px",
+        fontSize: "15px",
+      },
+      icon: false,
+      progressStyle: { background: "#d32f2f" },
+    });
+
+    updateUserBio(newBio)
+      .then((res) => {
+        toast.dismiss(toastid);
+        setProfile((prev) => ({ ...prev, bio: newBio }));
+        toast.success("Bio updated successfully!", {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          style: {
+            border: "2px solid #d32f2f",
+            backgroundColor: "#fff",
+            color: "#d32f2f",
+            borderRadius: "10px",
+            fontWeight: "500",
+            padding: "12px 16px",
+            fontSize: "15px",
+          },
+          icon: false,
+          progressStyle: { background: "#d32f2f" },
         });
-    }
-  };
+      })
+      .catch((err) => {
+        toast.dismiss(toastid);
+        toast.error("Failed to update bio", {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          style: {
+            border: "2px solid #d32f2f",
+            backgroundColor: "#fff",
+            color: "#d32f2f",
+            borderRadius: "10px",
+            fontWeight: "500",
+            padding: "12px 16px",
+            fontSize: "15px",
+          },
+          icon: false,
+          progressStyle: { background: "#d32f2f" },
+        });
+      });
+  }
+};
+
+// Update Profile Picture
+const handleProfilePicChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setAvatar(URL.createObjectURL(file));
+    const toastid=toast.info("Updating profile picture...", {
+      position: "top-right",
+      autoClose: false,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      style: {
+        border: "2px solid #d32f2f",
+        backgroundColor: "#fff",
+        color: "#d32f2f",
+        borderRadius: "10px",
+        fontWeight: "500",
+        padding: "12px 16px",
+        fontSize: "15px",
+      },
+      icon: false,
+      progressStyle: { background: "#d32f2f" },
+    });
+    updateprofilepic(file)
+      .then((res) => {
+        toast.dismiss(toastid);
+        toast.success("Profile picture updated successfully!", {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          style: {
+            border: "2px solid #d32f2f",
+            backgroundColor: "#fff",
+            color: "#d32f2f",
+            borderRadius: "10px",
+            fontWeight: "500",
+            padding: "12px 16px",
+            fontSize: "15px",
+          },
+          icon: false,
+          progressStyle: { background: "#d32f2f" },
+        });
+      })
+      .catch((err) => {
+        toast.dismiss(toastid);
+        toast.error("Failed to update profile picture", {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          style: {
+            border: "2px solid #d32f2f",
+            backgroundColor: "#fff",
+            color: "#d32f2f",
+            borderRadius: "10px",
+            fontWeight: "500",
+            padding: "12px 16px",
+            fontSize: "15px",
+          },
+          icon: false,
+          progressStyle: { background: "#d32f2f" },
+        });
+      });
+  }
+};
 
   if (!profile) return <div>Loading...</div>;
 
@@ -145,6 +263,8 @@ const Profile = () => {
             className="chat-btn"
             onClick={() => {
               localStorage.removeItem("user");
+              localStorage.removeItem("token");
+              socket.disconnect();
               navigate("/");
             }}
           >

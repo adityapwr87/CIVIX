@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../Navbar/Navbar";
+import {useNavigate } from "react-router-dom";
 import "./AdminProfile.css";
 import {
   getUserProfile,
   updateprofilepic,
   updateUserBio,
 } from "../../services/api";
+import { toast } from "react-toastify";
 
 const AdminProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -13,11 +15,13 @@ const AdminProfile = () => {
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const userId = currentUser._id;
   const [totalCount, setTotalCount] = useState(0);
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const res = await getUserProfile(userId);
         setProfile(res.data);
+        console.log("User profile data:", res.data);
         const totalCount = res.data.unsolvedCount + res.data.inProgressCount + res.data.solvedCount;
         setTotalCount(totalCount);
 
@@ -34,13 +38,70 @@ const AdminProfile = () => {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const toastid=toast.info("Updating profile picture...", {
+            position: "top-right",
+            autoClose: false,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            style: {
+              border: "2px solid #d32f2f",
+              backgroundColor: "#fff",
+              color: "#d32f2f",
+              borderRadius: "10px",
+              fontWeight: "500",
+              padding: "12px 16px",
+              fontSize: "15px",
+            },
+            icon: false,
+            progressStyle: { background: "#d32f2f" },
+          });
       setAvatar(URL.createObjectURL(file));
       updateprofilepic(file)
         .then((res) => {
-          console.log("Profile picture updated successfully");
+          toast.dismiss(toastid);
+          toast.success("Profile picture updated successfully!", {
+            position: "top-right",
+            autoClose: 4000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            style: {
+              border: "2px solid #d32f2f",
+              backgroundColor: "#fff",
+              color: "#d32f2f",
+              borderRadius: "10px",
+              fontWeight: "500",
+              padding: "12px 16px",
+              fontSize: "15px",
+            },
+            icon: false,
+            progressStyle: { background: "#d32f2f" },
+          });
         })
         .catch((err) => {
-          console.error("Failed to update profile picture", err);
+          toast.dismiss(toastid);
+          toast.error("Failed to update profile picture", {
+            position: "top-right",
+            autoClose: 4000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            style: {
+              border: "2px solid #d32f2f",
+              backgroundColor: "#fff",
+              color: "#d32f2f",
+              borderRadius: "10px",
+              fontWeight: "500",
+              padding: "12px 16px",
+              fontSize: "15px",
+            },
+            icon: false,
+            progressStyle: { background: "#d32f2f" },
+          });
         });
     }
   };
@@ -48,21 +109,117 @@ const AdminProfile = () => {
   const handleBioChange = () => {
     const newBio = prompt("Enter your new bio:", profile.bio || "");
     if (newBio !== null) {
+      const toastid = toast.info("Updating bio...", {
+            position: "top-right",
+            autoClose: false,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            style: {
+              border: "2px solid #d32f2f",
+              backgroundColor: "#fff",
+              color: "#d32f2f",
+              borderRadius: "10px",
+              fontWeight: "500",
+              padding: "12px 16px",
+              fontSize: "15px",
+            },
+            icon: false,
+            progressStyle: { background: "#d32f2f" },
+          });
       updateUserBio(newBio)
         .then(() => {
-          console.log("Bio updated successfully");
+          toast.dismiss(toastid);
           setProfile((prev) => ({ ...prev, bio: newBio }));
+          toast.success("Bio updated successfully!", {
+                    position: "top-right",
+                    autoClose: 4000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    style: {
+                      border: "2px solid #d32f2f",
+                      backgroundColor: "#fff",
+                      color: "#d32f2f",
+                      borderRadius: "10px",
+                      fontWeight: "500",
+                      padding: "12px 16px",
+                      fontSize: "15px",
+                    },
+                    icon: false,
+                    progressStyle: { background: "#d32f2f" },
+                  });
         })
         .catch((err) => {
-          console.error("Failed to update bio", err);
+          toast.dismiss(toastid);
+          toast.error("Failed to update bio", {
+                    position: "top-right",
+                    autoClose: 4000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    style: {
+                      border: "2px solid #d32f2f",
+                      backgroundColor: "#fff",
+                      color: "#d32f2f",
+                      borderRadius: "10px",
+                      fontWeight: "500",
+                      padding: "12px 16px",
+                      fontSize: "15px",
+                    },
+                    icon: false,
+                    progressStyle: { background: "#d32f2f" },
+                  });
         });
     }
   };
 
   const handleLogout = () => {
+    const toastid = toast.info("Logging out...", {
+      position: "top-right",
+      autoClose: false,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      style: {
+        border: "2px solid #d32f2f",
+        backgroundColor: "#fff",
+        color: "#d32f2f",
+        borderRadius: "10px",
+        fontWeight: "500",
+        padding: "12px 16px",
+        fontSize: "15px",
+      },
+      icon: false,
+      progressStyle: { background: "#d32f2f" },
+    });
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/login";
+    navigate("/");
+    toast.dismiss(toastid);
+    toast.success("Logged out successfully!", {
+      position: "top-right",
+      autoClose: 4000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      style: {
+        border: "2px solid #d32f2f",
+        backgroundColor: "#fff",
+        color: "#d32f2f",
+        borderRadius: "10px",
+        fontWeight: "500",
+        padding: "12px 16px",
+        fontSize: "15px",
+      },
+      icon: false,
+      progressStyle: { background: "#d32f2f" },
+    });
   };
 
   if (!profile) return <div>Loading...</div>;
@@ -132,8 +289,12 @@ const AdminProfile = () => {
             <table>
               <tbody>
                 <tr>
-                  <td>districtCode:</td>
-                  <td>{profile.districtCode}</td>
+                  <td>state:</td>
+                  <td>{profile.state}</td>
+                </tr>
+                <tr>
+                  <td>district:</td>
+                  <td>{profile.districtName}</td>
                 </tr>
                 <tr>
                   <td>Total Issues Reported:</td>
