@@ -1,10 +1,13 @@
 const Issue = require("../models/Issue");
 const User = require("../models/User");
-
+const Notification = require("../models/Notification");
 const getDistrictIssues = async (req, res) => {
   try {
-    const { districtCode } = req.params;
-    const admin = await User.findOne({ role: "admin", districtCode })
+    // The logged-in admin (set by protect middleware)
+    const adminId = req.user._id;
+
+    // Find admin by ID and populate issue arrays
+    const admin = await User.findById(adminId)
       .populate({
         path: "unsolvedIssues",
         populate: {
@@ -30,7 +33,15 @@ const getDistrictIssues = async (req, res) => {
     if (!admin) {
       return res.status(404).json({
         success: false,
-        message: "No admin found for this district",
+        message: "Admin not found",
+      });
+    }
+
+    // Ensure only admins can access this endpoint
+    if (admin.role !== "admin" && admin.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin privileges required.",
       });
     }
 
@@ -115,6 +126,21 @@ const updateIssueStatus = async (req, res) => {
       });
     }
 
+    const truncatedTitle =
+      updatedIssue.title.length > 20
+        ? updatedIssue.title.slice(0, 20) + "..."
+        : updatedIssue.title;
+
+    const notificationMessage = `Issue "${truncatedTitle}" status changed to "${status}"`;
+
+    const notification = await Notification.create({
+      user: updatedIssue.createdBy,
+      type: "issue",
+      referenceId: issueId,
+      message: notificationMessage,
+    });
+   
+
     res.status(200).json({
       success: true,
       data: { issue: updatedIssue },
@@ -129,19 +155,10 @@ const updateIssueStatus = async (req, res) => {
   }
 };
 
-const getDistrictStats = async (req, res) => {
-  try {
-    const { districtCode } = req.params;
 
-    const admin = await User.findOne({ role: "admin", districtCode });
 
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: "No admin found for this district",
-      });
-    }
 
+<<<<<<< HEAD
     const stats = {
       total:
         (admin.unsolvedIssues?.length || 0) +
@@ -221,10 +238,10 @@ const getIssueDetails = async (req, res) => {
     });
   }
 };
+=======
+>>>>>>> 03c33b1d7f5bf1dd44c178c7709544e34bb80594
 
 module.exports = {
   getDistrictIssues,
-  getDistrictStats,
   updateIssueStatus,
-  getIssueDetails,
 };

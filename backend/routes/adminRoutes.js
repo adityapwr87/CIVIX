@@ -8,8 +8,7 @@ const {
 } = require("../controllers/adminController");
 
 // Admin routes
-router.get("/district/:districtCode/issues", protect, getDistrictIssues);
-router.get("/district/:districtCode/stats", protect, getDistrictStats);
+router.get("/district/issues", protect, getDistrictIssues);
 router.patch("/issues/:issueId/status", protect, updateIssueStatus);
 
 module.exports = router;

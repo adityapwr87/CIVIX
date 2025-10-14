@@ -5,7 +5,10 @@ const generateToken = require("../utils/generateToken");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+<<<<<<< HEAD
 //const validDistricts = ["MH24", "2", "3"];
+=======
+>>>>>>> 03c33b1d7f5bf1dd44c178c7709544e34bb80594
 const register = async (req, res) => {
   try {
     const {
@@ -14,7 +17,8 @@ const register = async (req, res) => {
       password,
       role = "user",
       employeeId,
-      districtCode,
+      state,
+      districtName,
     } = req.body;
 
     // Basic validation
@@ -24,51 +28,54 @@ const register = async (req, res) => {
         .json({ message: "Username, email and password are required" });
     }
 
-    // Check existing user
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Validate admin registration
+    // Admin-specific validation
     if (role === "admin") {
-      if (!employeeId || !districtCode) {
+      if (!employeeId || !state || !districtName) {
         return res.status(400).json({
-          message: "Employee ID and district code are required for admins",
+          message:
+            "Employee ID, state, and district name are required for admins",
         });
       }
 
       // Validate government email
       if (!email.endsWith("@gov.in") && !email.endsWith("@nic.in")) {
         return res.status(403).json({
-          message: "Only official government emails allowed for admins",
+          message: "Only official government emails are allowed for admins",
         });
       }
 
-      // Check if admin already exists for this district
-      const existingAdmin = await User.findOne({ role: "admin", districtCode });
+      // Check if another admin already exists for this district
+      const existingAdmin = await User.findOne({
+        role: "admin",
+        state,
+        districtName,
+      });
       if (existingAdmin) {
         return res.status(400).json({
-          message: `Admin already exists for district ${districtCode}`,
+          message: `An admin already exists for ${districtName}, ${state}`,
         });
       }
     }
 
-    // Create new user
+    // Create new user (for both user and admin)
     const newUser = new User({
       username,
       email,
       password,
       role,
-      ...(role === "admin" && { employeeId, districtCode }),
+      ...(role === "admin" && { employeeId, state, districtName }),
     });
 
     await newUser.save();
 
-    // Generate token using id (not userId)
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    // Generate token
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
 
     res.status(201).json({
       message: "User registered successfully",
@@ -78,9 +85,10 @@ const register = async (req, res) => {
         username: newUser.username,
         email: newUser.email,
         role: newUser.role,
-        districtCode: newUser.districtCode || null,
+        state: newUser.state || null,
+        districtName: newUser.districtName || null,
       },
-      details:newUser,
+      details: newUser,
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -98,9 +106,7 @@ const login = async (req, res) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "24h",
-      });
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
       res.status(200).json({
         message: "User logged in successfully",
@@ -110,7 +116,8 @@ const login = async (req, res) => {
           username: user.username,
           email: user.email,
           role: user.role,
-          districtCode: user.districtCode || null,
+          state: user.state || null,
+          districtName: user.districtName || null,
         },
         details: user,
       });

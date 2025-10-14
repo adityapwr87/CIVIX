@@ -12,7 +12,6 @@ const UserProfile = () => {
 
   // ✅ Load logged-in user from localStorage
   const currentUser = JSON.parse(localStorage.getItem("user"));
-  console.log("Current User:", currentUser);
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
