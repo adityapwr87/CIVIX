@@ -159,7 +159,7 @@ const getDistrictStats = async (req, res) => {
       ? Number(((stats.solved / stats.total) * 100).toFixed(2))
       : 0;
 
-    // Get solved issues for average resolution time
+    
     const solvedIssues = await Issue.find({
       _id: { $in: admin.solvedIssues },
       solvedAt: { $exists: true },
@@ -196,7 +196,7 @@ const getDistrictStats = async (req, res) => {
   }
 };
 
-// Add new endpoint for getting single issue details
+// getting issue datail by issue id
 const getIssueDetails = async (req, res) => {
   try {
     const { issueId } = req.params;
