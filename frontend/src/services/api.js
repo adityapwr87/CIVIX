@@ -59,13 +59,6 @@ export const updateUserBio = (bio) => {
   return API.patch("/users/updateBio", { bio });
 };
 
-<<<<<<< HEAD
-=======
-export const getUnseenNotifications = () => API.get("/notifications/unseen");
-export const markNotificationRead = (id) =>
-  API.delete(`/notifications/${id}/read`);
-
->>>>>>> 03c33b1d7f5bf1dd44c178c7709544e34bb80594
 export default {
   login,
   register,
@@ -80,9 +73,4 @@ export default {
   updateIssueStatus, // also export here for convenience
   updateprofilepic,
   updateUserBio,
-<<<<<<< HEAD
 };
-=======
-  getUnseenNotifications,
-};
->>>>>>> 03c33b1d7f5bf1dd44c178c7709544e34bb80594
