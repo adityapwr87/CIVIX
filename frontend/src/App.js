@@ -9,6 +9,8 @@ import {
 import { useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "leaflet/dist/leaflet.css"; 
+import React from "react";
 
 import Landing from "./components/Home1/Landing";
 import Home from "./components/Homepage/Home";
@@ -27,6 +29,7 @@ import Profile from "./components/Profile/Profile";
 import AdminProfile from "./components/Profile/AdminProfile";
 import Notifications from "./components/Notification/Notifications";
 import WorkerIssueDetails from "./components/Worker/WorkerIssueDetails";
+import HeatmapPage from "./components/Admin/HeatmapPage";
 import { getSocket } from "./socket";
 
 /* -------------------- */
@@ -252,7 +255,25 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/heatmap"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <HeatmapPage />
+            </ProtectedRoute>
+          }
+        />
+
+<Route
+          path="/worker/heatmap"
+          element={
+            <ProtectedRoute roles={["worker"]}>
+              <HeatmapPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+      
 
       <ToastContainer
         position="top-right"

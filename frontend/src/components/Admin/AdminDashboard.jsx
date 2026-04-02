@@ -47,6 +47,29 @@ const AdminDashboard = () => {
     }
   };
 
+  // Add this right under your handleAutoAssign function
+  const handleShowHeatmap = () => {
+    // Combine all issues into one array
+    const allIssues = [
+      ...issues.unsolved,
+      ...issues.inProgress,
+      ...issues.solved,
+    ];
+
+    // Filter out issues without locations and map to a clean array of objects
+    const heatmapData = allIssues
+      .filter((issue) => issue.location) // Ensure the issue actually has location data
+      .map((issue) => ({
+        id: issue._id,
+        location: issue.location,
+        status: issue.status, // Optional: useful if you want to color-code pins on the map
+        title: issue.title    // Optional: useful for map popups
+      }));
+
+    // Navigate to the heatmap route and pass the data in the state
+    navigate("/admin/heatmap", { state: { heatmapData } });
+  };
+
   const handleAutoAssign = async () => {
     if (!window.confirm("Auto-assign unsolved issues to workers?")) return;
     try {
@@ -240,9 +263,17 @@ const AdminDashboard = () => {
             </select>
           </div>
           {/* Auto assign button */}
-          <div style={{ marginLeft: 16 }}>
+          {/* Action Buttons */}
+          <div style={{ marginLeft: 16, display: "flex", gap: "10px" }}>
             <button className="auth-button" onClick={handleAutoAssign}>
               Auto Assign
+            </button>
+            <button 
+              className="auth-button" 
+              onClick={handleShowHeatmap}
+              style={{ backgroundColor: "#3b82f6" }} // Optional: gives it a distinct blue color
+            >
+              Show Heatmap
             </button>
           </div>
         </div>

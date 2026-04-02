@@ -11,19 +11,22 @@ const getWorkerProfile = async (req, res) => {
 
     const worker = await User.findById(workerId)
       .select(
-        "_id username email createdAt bio profileImage unsolvedIssues inProgressIssues solvedIssues state districtName department totalAssigned",
+        "_id username email createdAt bio profileImage unsolvedIssues inProgressIssues solvedIssues state districtName department totalAssigned"
       )
       .populate({
         path: "unsolvedIssues",
-        select: "title status department createdAt assignedAt",
+        // Added 'location' here
+        select: "title status department createdAt assignedAt location", 
       })
       .populate({
         path: "inProgressIssues",
-        select: "title status department createdAt assignedAt",
+        // Added 'location' here
+        select: "title status department createdAt assignedAt location",
       })
       .populate({
         path: "solvedIssues",
-        select: "title status department createdAt solvedAt",
+        // Added 'location' here
+        select: "title status department createdAt solvedAt location",
       });
 
     if (!worker) return res.status(404).json({ message: "Worker not found" });

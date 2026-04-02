@@ -5,70 +5,35 @@ const sendEmail = require("../utils/sendEmail");
 
 const getDistrictIssues = async (req, res) => {
   try {
-    // The logged-in admin (set by protect middleware)
     const adminId = req.user._id;
+    const admin = await User.findById(adminId);
 
-    // Find admin by ID and populate issue arrays
-    const admin = await User.findById(adminId)
-      .populate({
-        path: "unsolvedIssues",
-        populate: {
-          path: "createdBy",
-          select: "username email",
-        },
-      })
-      .populate({
-        path: "inProgressIssues",
-        populate: {
-          path: "createdBy",
-          select: "username email",
-        },
-      })
-      .populate({
-        path: "solvedIssues",
-        populate: {
-          path: "createdBy",
-          select: "username email",
-        },
-      });
-
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: "Admin not found",
-      });
+    if (!admin || (admin.role !== "admin" && admin.role !== "superadmin")) {
+      return res.status(403).json({ success: false, message: "Access denied." });
     }
 
-    // Ensure only admins can access this endpoint
-    if (admin.role !== "admin" && admin.role !== "superadmin") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Admin privileges required.",
-      });
-    }
+    // Fetch ALL issues for this admin's district
+    // This will automatically include the 'location' field
+    const allIssues = await Issue.find({ districtCode: admin.districtCode })
+      .populate("createdBy", "username email")
+      .sort({ createdAt: -1 });
 
+    // Group them manually in the controller
     const groupedIssues = {
-      unsolved: admin.unsolvedIssues || [],
-      inProgress: admin.inProgressIssues || [],
-      solved: admin.solvedIssues || [],
-      total:
-        (admin.unsolvedIssues?.length || 0) +
-        (admin.inProgressIssues?.length || 0) +
-        (admin.solvedIssues?.length || 0),
+      unsolved: allIssues.filter(issue => issue.status === "unsolved"),
+      inProgress: allIssues.filter(issue => issue.status === "in progress"), // or "progress" based on your logic
+      solved: allIssues.filter(issue => issue.status === "solved"),
+      total: allIssues.length,
     };
+    console.log("Grouped Issues for District:", groupedIssues);
 
     res.status(200).json({
       success: true,
       data: groupedIssues,
-      message: "District issues retrieved successfully",
+      message: "District issues (including location) retrieved successfully",
     });
   } catch (error) {
-    console.error("Admin dashboard error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching district issues",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

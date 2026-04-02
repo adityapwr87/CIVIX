@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../Navbar/Navbar"; // Added Navbar for consistency
+import Navbar from "../Navbar/Navbar";
 import { getWorkerProfile } from "../../services/api";
 import { FaExclamation, FaCheck, FaSpinner } from "react-icons/fa";
 import "./WorkerDashboard.css";
@@ -35,6 +35,27 @@ const WorkerDashboard = () => {
   const handleIssueClick = (issueId) => {
     navigate(`/worker/issue/${issueId}`);
   };
+
+  // 🔥 NEW: Handler to prepare data and navigate to Heatmap
+  const handleShowHeatmap = () => {
+    const allIssues = [
+      ...(profile?.unsolved || []),
+      ...(profile?.solved || [])
+    ];
+
+    const heatmapData = allIssues
+      .filter((issue) => issue.location) // Ensure issue has location data
+      .map((issue) => ({
+        id: issue._id,
+        location: issue.location,
+        status: issue.status,
+        title: issue.title
+      }));
+
+    // Navigate to the heatmap route for workers
+    navigate("/worker/heatmap", { state: { heatmapData } });
+  };
+
   // Helper Component for Stats
   const CircularProgress = ({ percentage, color, label, count, total }) => {
     const radius = 70;
@@ -149,8 +170,28 @@ const WorkerDashboard = () => {
               Welcome back, <strong>{profile?.username}</strong>
             </p>
           </div>
-          <div className="total-badge">
-            Total Assigned: <strong>{totalAssigned}</strong>
+          
+          {/* 🔥 NEW: Added Flex container to align badge and button */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div className="total-badge">
+              Total Assigned: <strong>{totalAssigned}</strong>
+            </div>
+            <button 
+              onClick={handleShowHeatmap}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#3b82f6",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "0.9rem",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+              }}
+            >
+              Show Heatmap
+            </button>
           </div>
         </div>
 
