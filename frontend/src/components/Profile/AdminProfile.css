@@ -1,235 +1,333 @@
-.admin-profile-container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
-  background: #f3f4f6;
-  padding: 40px 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  max-width: 1200px; /* Increased from 1000px */
-  width: 100%;
-  margin: 80px auto 32px;
-  padding: 0 20px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #0084ff;
+  --danger-color: #ef4444;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --bg-page: #f0f2f5;
+  --bg-card: #ffffff;
+  --text-main: #050505;
+  --text-secondary: #65676b;
+  --border-color: #e4e6eb;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.admin-profile-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  padding: 0;
-  max-width: 100%; /* Allow card to use full container width */
-  width: 100%;
+/* --- Wrapper & Loading --- */
+.admin-page-wrapper {
+  min-height: calc(100vh - 70px);
+  padding: 2rem 1rem;
+  background-color: var(--bg-page);
+  font-family: 'Inter', sans-serif;
+}
+
+.admin-loading-state {
   display: flex;
   flex-direction: column;
-  align-items: center;
-}
-
-.admin-profile-header {
-  width: 100%; /* Make header take full width of the card/container */
-  box-sizing: border-box;
-  /* Keep your existing styles */
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin-bottom: 24px;
-  position: relative;
-}
-
-.admin-avatar-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: #f0f0f0;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  overflow: hidden;
+  align-items: center;
+  height: 60vh;
+  color: var(--text-secondary);
+  font-weight: 500;
+  gap: 1rem;
 }
 
-.admin-avatar-placeholder img {
+.admin-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e4e6eb;
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: adminSpin 1s linear infinite;
+}
+
+@keyframes adminSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Main Container --- */
+.admin-profile-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: adminFadeIn 0.3s ease-in-out;
+}
+
+@keyframes adminFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Header Card --- */
+.admin-header-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.admin-header-top {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+/* Avatar Wrapper */
+.admin-avatar-section {
+  flex-shrink: 0;
+}
+
+.admin-avatar-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.admin-profile-avatar, .admin-default-avatar {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  border: 4px solid var(--bg-page);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.admin-profile-details {
-  flex: 1;
+.admin-default-avatar {
+  background: linear-gradient(135deg, #e0e7ff, #0084ff);
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.admin-profile-details h2 {
-  font-size: 30px;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
   font-weight: 700;
-  margin: 0 0 8px 0;
-  color: #111827;
-  letter-spacing: -0.025em;
-  text-align: left;
 }
 
-.admin-profile-details p {
-  color: #4b5563;
-  font-size: 15px;
-  line-height: 1.6;
-  margin: 0 0 12px 0;
-  font-weight: 400;
+.admin-avatar-edit-btn {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
+  transition: all 0.2s;
 }
 
-.admin-profile-details span {
-  color: #6b7280;
-  font-size: 14px;
+.admin-avatar-edit-btn:hover {
+  background: #f0f2f5;
+  color: var(--primary-color);
+}
+
+/* Info Section */
+.admin-info-section {
+  flex: 1;
+}
+
+.admin-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.admin-name-row h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--text-main);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-role-badge {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Logout Button */
+.admin-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.admin-logout-btn:hover {
+  background-color: #fee2e2;
+  color: var(--danger-color);
+  border-color: #fee2e2;
+}
+
+/* Bio */
+.admin-bio-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-profile-bio {
+  color: var(--text-main);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.admin-edit-bio-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.admin-edit-bio-btn:hover {
+  background: #f0f2f5;
+  color: var(--primary-color);
+}
+
+.admin-location-info {
+  display: flex;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.admin-location-info span {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.profile-actions {
+/* Stats Row */
+.admin-stats-row {
   display: flex;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.profile-action-btn {
-  background: black;
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.profile-action-btn:hover {
-  background: #1e40af;
-}
-
-.chat-btn {
-  position: absolute;
-  right: 32px;
-  top: 32px;
-  background: #111827;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
+  justify-content: space-around;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  background-color: #f8f9fa;
+  padding: 1.25rem;
+  border-radius: 12px;
 }
 
-.chat-btn:hover {
-  background: #374151;
+.admin-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.admin-profile-info {
-  width: 100%;
-  margin-top: 18px;
-  padding-left: 32px; /* Add this for left padding */
+.admin-stat-item strong {
+  font-size: 1.5rem;
+  color: var(--text-main);
 }
 
-.admin-profile-info h3 {
+.admin-stat-item.text-green strong { color: var(--success-color); }
+.admin-stat-item.text-orange strong { color: var(--warning-color); }
+.admin-stat-item.text-red strong { color: var(--danger-color); }
+
+.admin-stat-item span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.admin-stat-divider {
+  width: 1px;
+  height: 40px;
+  background-color: #e0e0e0;
+}
+
+/* --- Admin Details Card --- */
+.admin-details-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.admin-details-card h3 {
+  margin: 0 0 1.5rem 0;
   font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #2563eb;
-  text-align: left;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--bg-page);
+  padding-bottom: 1rem;
 }
 
-.admin-profile-info table {
-  width: 100%;
-  border-collapse: collapse;
+.admin-details-grid {
+  display: grid;
+  gap: 1rem;
 }
 
-.admin-profile-info td {
-  padding: 8px 0;
-  font-size: 1rem;
-  color: #22223b;
+.admin-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f2f5;
 }
 
-.admin-profile-info td:first-child {
+.admin-detail-row:last-child {
+  border-bottom: none;
+}
+
+.admin-detail-row .label {
+  color: var(--text-secondary);
   font-weight: 500;
-  color: #4b5563;
-  padding-right: 12px;
 }
 
-.logout-btn {
-  margin-top: 32px;
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 24px;
-  font-size: 15px;
+.admin-detail-row .value {
+  color: var(--text-main);
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.logout-btn:hover {
-  background: #b91c1c;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .admin-profile-card {
-    padding: 20px 8px;
-    max-width: 98vw;
-  }
-  .admin-profile-info h3 {
+@media (max-width: 768px) {
+  .admin-header-top {
+    flex-direction: column;
     text-align: center;
   }
-  .profile-header {
+  
+  .admin-name-row {
     flex-direction: column;
-    align-items: center;
-    gap: 16px;
+    gap: 0.5rem;
   }
-  .profile-header-details {
-    align-items: center;
-    width: 100%;
+  
+  .admin-location-info {
+    justify-content: center;
+    flex-wrap: wrap;
   }
-}
-
-/* Responsive: stack vertically on small screens */
-@media (max-width: 700px) {
-  .profile-header {
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    padding: 18px 6px;
-  }
-  .admin-profile-image {
-    min-width: 0;
-  }
-  .profile-header-details {
-    align-items: center;
-    width: 100%;
-  }
-}
-.admin-profile-stats {
-  padding-left: 10px;
-}
-
-@media (max-width: 768px) {
-  .admin-profile-header {
-    flex-direction: column;
-  }
-  .chat-btn {
-    position: static;
-    margin-top: 16px;
-    align-self: flex-start;
+  
+  .admin-bio-container {
+    justify-content: center;
   }
 }

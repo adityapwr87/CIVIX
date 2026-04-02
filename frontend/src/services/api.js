@@ -14,7 +14,7 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Authentication routes
@@ -33,6 +33,7 @@ export const addComment = (issueId, commentText) =>
 export const getIssueById = (id) => API.get(`/issues/${id}`);
 export const upvoteIssue = (id) => API.post(`/issues/${id}/upvote`);
 export const getAllIssues = () => API.get("/issues/all");
+export const getWorkerProfile = () => API.get(`/worker/profile`);
 
 // Chats
 export const getChatHistory = () => API.get("/chat-history");
@@ -41,7 +42,13 @@ export const getChatMessages = (senderId, receiverId) =>
 
 // Admin - now protected
 export const updateIssueStatus = (id, status) =>
-  API.patch(`/admin/issues/${id}/status`, { status });
+  API.patch(`/worker/issues/${id}/status`, { status });
+
+// Admin auto-assign
+export const autoAssignIssues = () => API.post(`/admin/issues/auto-assign`);
+export const getDistrictWorkers = () => API.get(`/admin/district/workers`);
+export const assignIssueToWorker = (issueId, workerId) =>
+  API.post("/admin/issues/assign", { issueId, workerId });
 
 // Profile
 export const updateprofilepic = (file) => {
@@ -59,6 +66,10 @@ export const updateUserBio = (bio) => {
   return API.patch("/users/updateBio", { bio });
 };
 
+export const getUnseenNotifications = () => API.get("/notifications/unseen");
+export const markNotificationRead = (id) =>
+  API.delete(`/notifications/${id}/read`);
+
 export default {
   login,
   register,
@@ -73,4 +84,6 @@ export default {
   updateIssueStatus, // also export here for convenience
   updateprofilepic,
   updateUserBio,
+  getUnseenNotifications,
+  autoAssignIssues,
 };

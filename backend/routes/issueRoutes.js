@@ -5,9 +5,6 @@ const upload = require("../utils/upload");
 const {
   createIssue,
   getAllIssues,
-  getUserIssues,
-  getIssueStats,
-  updateIssueStatus,
   getIssueById,
   addComment,
   toggleUpvote,
@@ -15,15 +12,11 @@ const {
 
 // Public routes
 
-
 // Protected routes
 router.use(protect);
 router.get("/all", getAllIssues);
 router.get("/:id", getIssueById);
 router.post("/", upload.array("images"), createIssue);
-router.get("/my-issues", getUserIssues);
-router.get("/stats", getIssueStats);
-router.patch("/:issueId/status", updateIssueStatus);
 router.post("/:id/comments", addComment);
 router.post("/:id/upvote", protect, toggleUpvote);
 

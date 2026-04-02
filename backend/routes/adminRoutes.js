@@ -4,12 +4,16 @@ const { protect } = require("../middleware/authMiddleware");
 const {
   getDistrictIssues,
   getDistrictStats,
-  updateIssueStatus,
+  getDistrictWorkers,
+  assignIssueToWorker,
 } = require("../controllers/adminController");
 
+const { autoAssignIssues } = require("../controllers/adminController");
+
 // Admin routes
-router.get("/district/:districtCode/issues", protect, getDistrictIssues);
-router.get("/district/:districtCode/stats", protect, getDistrictStats);
-router.patch("/issues/:issueId/status", protect, updateIssueStatus);
+router.get("/district/issues", protect, getDistrictIssues);
+router.get("/district/workers", protect, getDistrictWorkers);
+router.post("/issues/auto-assign", protect, autoAssignIssues);
+router.post("/issues/assign", protect, assignIssueToWorker);
 
 module.exports = router;

@@ -11,6 +11,8 @@ const issueSchema = new mongoose.Schema(
       address: String,
     },
     districtCode: String,
+    state: String,
+    districtName: String,
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     status: { type: String, default: "unsolved" },
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -21,6 +23,9 @@ const issueSchema = new mongoose.Schema(
         createdAt: Date,
       },
     ],
+    department: String,
+    assignedWorker: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    assignedAt: Date,
     solvedAt: Date,
   },
   { timestamps: true }

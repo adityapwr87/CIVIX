@@ -55,9 +55,9 @@ const ChatHistory = () => {
                     src={user.profileImage}
                     alt={user.username}
                     style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "100%",
                       objectFit: "cover",
                     }}
                   />

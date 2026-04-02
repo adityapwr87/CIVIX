@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaExclamation, FaSpinner, FaCheck } from "react-icons/fa";
 import axios from "axios";
+import { autoAssignIssues } from "../../services/api";
 import "./AdminDashboard.css";
-import Navbar from "../Navbar/Navbar"; // Adjust the import path as necessary
+import Navbar from "../Navbar/Navbar";
+
 const AdminDashboard = () => {
   const [issues, setIssues] = useState({
     unsolved: [],
@@ -12,139 +14,333 @@ const AdminDashboard = () => {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("unsolved");
+
+  // 🔥 NEW STATE FOR DEPARTMENT FILTER
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
   const fetchIssues = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/admin/district/${user.districtCode}/issues`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/district/issues`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-
       if (response.data.success) {
         setIssues(response.data.data);
+      } else {
+        setError(response.data.message || "Failed to fetch issues");
       }
-    } catch (error) {
-      console.error("Error fetching issues:", error);
+    } catch (err) {
+      console.error("Error fetching issues:", err);
+      setError(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAutoAssign = async () => {
+    if (!window.confirm("Auto-assign unsolved issues to workers?")) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await autoAssignIssues();
+      if (res.data && res.data.success) {
+        // Refresh issues after assignment
+        await fetchIssues();
+        alert(res.data.message || "Auto-assign completed");
+      } else {
+        setError(res.data?.message || "Auto-assign failed");
+      }
+    } catch (err) {
+      console.error("Auto-assign error:", err);
+      setError(
+        err.response?.data?.message || err.message || "Auto-assign failed"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!user?.districtCode) {
-      console.error("No district code found for admin");
-      return;
-    }
     fetchIssues();
-  }, [user?.districtCode]);
+  }, []);
 
   const handleIssueClick = (issueId) => {
-    console.log("Navigating to issue:", issueId); // Debug log
-    navigate(`/admin/issue/${issueId}`); // Updated route path
+    navigate(`/admin/issue/${issueId}`);
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  const CircularProgress = ({ percentage, color, label, count, total }) => {
+    const radius = 70;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+
+    return (
+      <div className="circular-progress-container">
+        <svg className="circular-progress" width="180" height="180">
+          <circle
+            className="circle-bg"
+            cx="90"
+            cy="90"
+            r={radius}
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth="12"
+          />
+          <circle
+            className="circle-progress"
+            cx="90"
+            cy="90"
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth="12"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            transform="rotate(-90 90 90)"
+          />
+          <text
+            x="90"
+            y="80"
+            textAnchor="middle"
+            className="progress-count"
+            fill={color}
+          >
+            {count}
+          </text>
+          <text
+            x="90"
+            y="105"
+            textAnchor="middle"
+            className="progress-total"
+            fill="#6b7280"
+          >
+            of {total}
+          </text>
+        </svg>
+        <p className="progress-label" style={{ color }}>
+          {label}
+        </p>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Navbar />
+        <div className="dashboard-container">
+          <div className="loading-state">
+            <FaSpinner className="spin-icon" />
+            <p>Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <Navbar />
+        <div className="dashboard-container">
+          <div className="error-state">
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------------
+  // 🔥 FILTERING RULES BASED ON SELECTED DEPARTMENT
+  // ----------------------------------------------------------
+
+  const filteredUnsolved =
+    selectedDepartment === "all"
+      ? issues.unsolved
+      : issues.unsolved.filter((i) => i.department === selectedDepartment);
+
+  const filteredInProgress =
+    selectedDepartment === "all"
+      ? issues.inProgress
+      : issues.inProgress.filter((i) => i.department === selectedDepartment);
+
+  const filteredSolved =
+    selectedDepartment === "all"
+      ? issues.solved
+      : issues.solved.filter((i) => i.department === selectedDepartment);
+
+  // Total filtered issues
+  const filteredTotal =
+    filteredUnsolved.length + filteredInProgress.length + filteredSolved.length;
+
+  // Percentages for progress circles
+  const unsolvedPercentage =
+    filteredTotal > 0 ? (filteredUnsolved.length / filteredTotal) * 100 : 0;
+
+  const inProgressPercentage =
+    filteredTotal > 0 ? (filteredInProgress.length / filteredTotal) * 100 : 0;
+
+  const solvedPercentage =
+    filteredTotal > 0 ? (filteredSolved.length / filteredTotal) * 100 : 0;
+
+  // Set issues shown in the list
+  const currentIssues =
+    activeTab === "unsolved"
+      ? filteredUnsolved
+      : activeTab === "inProgress"
+      ? filteredInProgress
+      : filteredSolved;
 
   return (
     <div>
       <Navbar />
-      <div className="admin-dashboard">
-        <div className="stats-container">
-          <div className="stat-card unsolved">
-            <h3>Unsolved</h3>
-            <span className="stat-number">{issues.unsolved.length}</span>
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1>Admin Dashboard</h1>
+          <p className="total-issues">
+            Total Issues: <strong>{filteredTotal}</strong>
+          </p>
+
+          {/* 🔥 DEPARTMENT FILTER DROPDOWN */}
+          <div className="filter-container">
+            <label className="filter-label">Filter By Department:</label>
+            <select
+              className="department-filter"
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+            >
+              <option value="all">All Departments</option>
+              <option value="Roads & Transport">Roads & Transport</option>
+              <option value="Water Supply">Water Supply</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Waste Management">Waste Management</option>
+              <option value="Drainage & Sewerage">Drainage & Sewerage</option>
+              <option value="Streetlights">Streetlights</option>
+              <option value="Public Health & Sanitation">
+                Public Health & Sanitation
+              </option>
+              <option value="Parks & Trees">Parks & Trees</option>
+              <option value="Pollution Control">Pollution Control</option>
+              <option value="Public Safety">Public Safety</option>
+              <option value="Building & Construction">
+                Building & Construction
+              </option>
+              <option value="Others">Others</option>
+            </select>
           </div>
-          <div className="stat-card in-progress">
-            <h3>In Progress</h3>
-            <span className="stat-number">{issues.inProgress.length}</span>
-          </div>
-          <div className="stat-card solved">
-            <h3>Solved</h3>
-            <span className="stat-number">{issues.solved.length}</span>
-          </div>
-          <div className="stat-card total">
-            <h3>Total</h3>
-            <span className="stat-number">{issues.total}</span>
+          {/* Auto assign button */}
+          <div style={{ marginLeft: 16 }}>
+            <button className="auth-button" onClick={handleAutoAssign}>
+              Auto Assign
+            </button>
           </div>
         </div>
 
-        <div className="issues-grid">
-          <div className="issues-column">
-            <h2>
-              <FaExclamation /> Unsolved Issues
-            </h2>
-            <div className="issues-list">
-              {issues.unsolved.map((issue) => (
-                <div
-                  key={issue._id}
-                  className="issue-card"
-                  onClick={() => handleIssueClick(issue._id)}
-                >
-                  <h3>{issue.title}</h3>
-                  <p>{issue.description?.substring(0, 100)}...</p>
-                  <div className="issue-meta">
-                    <span>By: {issue.createdBy?.username}</span>
-                    <span>
-                      {new Date(issue.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* STATISTICS WITH FILTERING */}
+        <div className="statistics-section">
+          <CircularProgress
+            percentage={unsolvedPercentage}
+            color="#ef4444"
+            label="Unsolved"
+            count={filteredUnsolved.length}
+            total={filteredTotal}
+          />
+          <CircularProgress
+            percentage={inProgressPercentage}
+            color="#f59e0b"
+            label="In Progress"
+            count={filteredInProgress.length}
+            total={filteredTotal}
+          />
+          <CircularProgress
+            percentage={solvedPercentage}
+            color="#10b981"
+            label="Solved"
+            count={filteredSolved.length}
+            total={filteredTotal}
+          />
+        </div>
+
+        {/* ISSUE LIST */}
+        <div className="issues-section">
+          <div className="tabs-container">
+            <button
+              className={`tab-button ${
+                activeTab === "unsolved" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("unsolved")}
+            >
+              <FaExclamation />
+              <span>Unsolved ({filteredUnsolved.length})</span>
+            </button>
+
+            <button
+              className={`tab-button ${
+                activeTab === "inProgress" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("inProgress")}
+            >
+              <FaSpinner />
+              <span>In Progress ({filteredInProgress.length})</span>
+            </button>
+
+            <button
+              className={`tab-button ${activeTab === "solved" ? "active" : ""}`}
+              onClick={() => setActiveTab("solved")}
+            >
+              <FaCheck />
+              <span>Solved ({filteredSolved.length})</span>
+            </button>
           </div>
 
-          <div className="issues-column">
-            <h2>
-              <FaSpinner /> In Progress
-            </h2>
-            <div className="issues-list">
-              {issues.inProgress.map((issue) => (
-                <div
-                  key={issue._id}
-                  className="issue-card"
-                  onClick={() => handleIssueClick(issue._id)}
-                >
-                  <h3>{issue.title}</h3>
-                  <p>{issue.description?.substring(0, 100)}...</p>
-                  <div className="issue-meta">
-                    <span>By: {issue.createdBy?.username}</span>
-                    <span>
-                      {new Date(issue.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <div className="issues-content">
+            {currentIssues.length === 0 ? (
+              <div className="empty-state">
+                <p>No issues found for this filter.</p>
+              </div>
+            ) : (
+              <div className="issues-grid">
+                {currentIssues.map((issue, index) => (
+                  <div
+                    key={issue._id}
+                    className="issue-card"
+                    onClick={() => handleIssueClick(issue._id)}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="issue-header">
+                      <h3>{issue.title}</h3>
+                      <span className={`status-badge ${activeTab}`}>
+                        {activeTab === "inProgress" ? "In Progress" : activeTab}
+                      </span>
+                    </div>
 
-          <div className="issues-column">
-            <h2>
-              <FaCheck /> Solved Issues
-            </h2>
-            <div className="issues-list">
-              {issues.solved.map((issue) => (
-                <div
-                  key={issue._id}
-                  className="issue-card"
-                  onClick={() => handleIssueClick(issue._id)}
-                >
-                  <h3>{issue.title}</h3>
-                  <p>{issue.description?.substring(0, 100)}...</p>
-                  <div className="issue-meta">
-                    <span>By: {issue.createdBy?.username}</span>
-                    <span>
-                      {new Date(issue.createdAt).toLocaleDateString()}
-                    </span>
+                    <p className="issue-description">
+                      {issue.description?.substring(0, 150)}...
+                    </p>
+
+                    <div className="issue-footer">
+                      <span className="issue-author">
+                        By: {issue.createdBy?.username || "Unknown"}
+                      </span>
+                      <span className="issue-date">
+                        {new Date(issue.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

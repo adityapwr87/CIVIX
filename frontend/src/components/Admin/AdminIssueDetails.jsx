@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { addComment } from "../../services/api"; 
-import { getIssueById } from "../../services/api";
+import { addComment } from "../../services/api";
+import {
+  getIssueById,
+  getDistrictWorkers,
+  assignIssueToWorker,
+} from "../../services/api";
 import { upvoteIssue } from "../../services/api";
 import {
   FaMapMarkerAlt,
@@ -12,6 +16,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaEdit,
+  FaTimes,
 } from "react-icons/fa";
 import Navbar from "../Navbar/Navbar";
 import "./AdminIssueDetails.css";
@@ -25,6 +30,13 @@ const AdminIssueDetails = () => {
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [workers, setWorkers] = useState([]);
+  const [filteredWorkers, setFilteredWorkers] = useState([]);
+  const [loadingWorkers, setLoadingWorkers] = useState(false);
+  const [assigningTo, setAssigningTo] = useState(null);
+  const [deptFilter, setDeptFilter] = useState("All");
+
   const userId = JSON.parse(localStorage.getItem("user"))._id;
 
   useEffect(() => {
@@ -35,7 +47,7 @@ const AdminIssueDetails = () => {
       } catch (err) {
         console.error(
           "Failed to load issue:",
-          err.response?.data || err.message
+          err.response?.data || err.message,
         );
       } finally {
         setLoading(false);
@@ -54,7 +66,7 @@ const AdminIssueDetails = () => {
     e.preventDefault();
 
     try {
-      const res = await addComment(id, comment); 
+      const res = await addComment(id, comment);
       const data = res.data;
 
       setIssue((prev) => ({
@@ -65,7 +77,7 @@ const AdminIssueDetails = () => {
     } catch (err) {
       console.error(
         "Error submitting comment:",
-        err.response?.data?.message || err.message
+        err.response?.data?.message || err.message,
       );
     }
   };
@@ -90,13 +102,13 @@ const AdminIssueDetails = () => {
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? issue.images.length - 1 : prev - 1
+      prev === 0 ? issue.images.length - 1 : prev - 1,
     );
   };
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === issue.images.length - 1 ? 0 : prev + 1
+      prev === issue.images.length - 1 ? 0 : prev + 1,
     );
   };
 
@@ -112,9 +124,8 @@ const AdminIssueDetails = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: newStatus }),
-        }
+        },
       );
-
 
       if (res.ok) {
         const data = await res.json();
@@ -125,6 +136,51 @@ const AdminIssueDetails = () => {
       console.error("Error updating status:", error);
     }
   };
+
+  const fetchWorkers = async () => {
+    setLoadingWorkers(true);
+    try {
+      const res = await getDistrictWorkers();
+      setWorkers(res.data);
+      setFilteredWorkers(res.data);
+    } catch (error) {
+      console.error("Error fetching workers", error);
+    } finally {
+      setLoadingWorkers(false);
+    }
+  };
+
+  const handleOpenAssignModal = () => {
+    setShowAssignModal(true);
+    fetchWorkers();
+  };
+
+  const handleAssignWorker = async (workerId, workerName) => {
+    setAssigningTo(workerName);
+    try {
+      const res = await assignIssueToWorker(id, workerId);
+      if (res.data.success) {
+        setIssue(res.data.issue);
+        setShowAssignModal(false);
+        // show success message if needed, e.g. toast
+      } else {
+        alert(res.data.message || "Failed to assign issue");
+      }
+    } catch (error) {
+      console.error("Error assigning worker:", error);
+      alert("Error assigning worker.");
+    } finally {
+      setAssigningTo(null);
+    }
+  };
+
+  useEffect(() => {
+    if (deptFilter === "All") {
+      setFilteredWorkers(workers);
+    } else {
+      setFilteredWorkers(workers.filter((w) => w.department === deptFilter));
+    }
+  }, [deptFilter, workers]);
 
   const handleViewLocation = () => {
     const coords = issue.location?.coordinates;
@@ -151,13 +207,25 @@ const AdminIssueDetails = () => {
               <span className={`status-badge1 ${issue.status}`}>
                 {issue.status}
               </span>
-
-              <button
-                className="change-status-btn"
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-              >
-                <FaEdit /> Change Status
-              </button>
+              <span className="meta-item department-tag">
+                🏷️ {issue.department}
+              </span>
+              <span className="meta-item assigned-to">
+                Assigned:{" "}
+                {issue.assignedWorker ? (
+                  <span
+                    className="assigned-user"
+                    onClick={() =>
+                      navigate(`/user/${issue.assignedWorker._id}`)
+                    }
+                    style={{ cursor: "pointer", textDecoration: "underline" }}
+                  >
+                    {issue.assignedWorker.username}
+                  </span>
+                ) : (
+                  "Unassigned"
+                )}
+              </span>
 
               <button
                 className="view-location-btn"
@@ -165,20 +233,12 @@ const AdminIssueDetails = () => {
               >
                 📍 View Location
               </button>
-
-              {showStatusDropdown && (
-                <div className="status-dropdown">
-                  <button onClick={() => handleStatusChange("unsolved")}>
-                    Unsolved
-                  </button>
-                  <button onClick={() => handleStatusChange("in progress")}>
-                    In Progress
-                  </button>
-                  <button onClick={() => handleStatusChange("solved")}>
-                    Solved
-                  </button>
-                </div>
-              )}
+              <button
+                className="assign-worker-btn"
+                onClick={handleOpenAssignModal}
+              >
+                👷 Assign Issue
+              </button>
             </div>
 
             <span className="issue-district2">
@@ -345,6 +405,82 @@ const AdminIssueDetails = () => {
           </form>
         </div>
       </div>
+      {showAssignModal && (
+        <div className="assign-modal-overlay">
+          {assigningTo ? (
+            <div className="assign-modal-content loading-view">
+              <div className="spinner"></div>
+              <h2>Assigning issue to {assigningTo}...</h2>
+            </div>
+          ) : (
+            <div className="assign-modal-content">
+              <div className="modal-header">
+                <h2>Assign Worker</h2>
+                <button
+                  className="close-modal-icon"
+                  onClick={() => setShowAssignModal(false)}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              <div className="modal-filter">
+              <label>Filter by Department:</label>
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+              >
+                <option value="All">All Departments</option>
+                {[...new Set(workers.map((w) => w.department))].map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="workers-list-container">
+              {loadingWorkers ? (
+                <p>Loading workers...</p>
+              ) : filteredWorkers.length > 0 ? (
+                <div className="workers-table">
+                  <div className="workers-table-header">
+                    <span>Name</span>
+                    <span>Department</span>
+                    <span>Solved</span>
+                    <span>Unsolved</span>
+                    <span>Action</span>
+                  </div>
+                  {filteredWorkers.map((worker) => (
+                    <div key={worker.id} className="worker-row">
+                      <span
+                        className="worker-name"
+                        onClick={() => navigate(`/user/${worker.id}`)}
+                      >
+                        {worker.name}
+                      </span>
+                      <span className="worker-dept">{worker.department}</span>
+                      <span className="worker-stat solved">
+                        {worker.solvedIssues}
+                      </span>
+                      <span className="worker-stat unsolved">
+                        {worker.unsolvedIssues}
+                      </span>
+                      <button
+                        className="assign-action-btn"
+                        onClick={() => handleAssignWorker(worker.id, worker.name)}
+                      >
+                        Assign
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No workers found.</p>
+              )}
+            </div>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 };

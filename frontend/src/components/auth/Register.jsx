@@ -9,11 +9,13 @@ import {
   FaEye,
   FaEyeSlash,
 } from "react-icons/fa";
+import { register } from "../../services/api";
+import { statesAndDistricts } from "../../utils/statesAndDistricts";
 import "./Auth.css";
-import {  register, } from "../../services/api"; 
 
 const Register = () => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -21,19 +23,33 @@ const Register = () => {
     confirmPassword: "",
     role: "user",
     employeeId: "",
-    districtCode: "",
+    state: "",
+    districtName: "",
+    department: "",
   });
+
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Find selected state object
+  const selectedState = statesAndDistricts.find(
+    (item) => item.state === formData.state
+  );
+
+  // Handle form changes
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "state" && { districtName: "" }),
+    }));
   };
 
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -42,8 +58,10 @@ const Register = () => {
       return;
     }
 
+    setError("");
+    setLoading(true);
+
     try {
-      // Create request body based on role
       const requestBody = {
         username: formData.username,
         email: formData.email,
@@ -51,10 +69,16 @@ const Register = () => {
         role: formData.role,
       };
 
-      // Add admin-specific fields if role is admin
       if (formData.role === "admin") {
         requestBody.employeeId = formData.employeeId;
-        requestBody.districtCode = formData.districtCode;
+        requestBody.state = formData.state;
+        requestBody.districtName = formData.districtName;
+      }
+
+      if (formData.role === "worker") {
+        requestBody.state = formData.state;
+        requestBody.districtName = formData.districtName;
+        requestBody.department = formData.department;
       }
 
       const response = await register(requestBody);
@@ -63,11 +87,14 @@ const Register = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("details", JSON.stringify(data.details));
+
       navigate("/dashboard");
     } catch (err) {
       setError(
         err.response?.data?.message || "Failed to register. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,6 +103,7 @@ const Register = () => {
       <button onClick={() => navigate("/")} className="back-home">
         <FaArrowLeft /> Back to Home
       </button>
+
       <div className="auth-card">
         <h2>Create Account</h2>
         <p className="auth-subtitle">Sign up to start reporting issues</p>
@@ -83,7 +111,7 @@ const Register = () => {
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {/* Username field */}
+          {/* Username */}
           <div className="form-group">
             <div className="input-icon">
               <FaUser />
@@ -98,7 +126,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Email field */}
+          {/* Email */}
           <div className="form-group">
             <div className="input-icon">
               <FaEnvelope />
@@ -113,25 +141,22 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Role selection */}
+          {/* Role */}
           <div className="form-group">
             <div className="input-icon">
               <FaUser />
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="role-select"
-              >
+              <select name="role" value={formData.role} onChange={handleChange}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
+                <option value="worker">Worker</option>
               </select>
             </div>
           </div>
 
-          {/* Conditional admin fields */}
+          {/* Admin Fields */}
           {formData.role === "admin" && (
             <>
+              {/* Employee ID */}
               <div className="form-group">
                 <div className="input-icon">
                   <FaBuilding />
@@ -146,23 +171,128 @@ const Register = () => {
                 </div>
               </div>
 
+              {/* State */}
               <div className="form-group">
                 <div className="input-icon">
                   <FaBuilding />
-                  <input
-                    type="text"
-                    name="districtCode"
-                    placeholder="District Code (e.g., MH 24)"
-                    value={formData.districtCode}
+                  <select
+                    name="state"
+                    value={formData.state}
                     onChange={handleChange}
                     required
-                  />
+                  >
+                    <option value="">Select State</option>
+                    {statesAndDistricts.map((item) => (
+                      <option key={item.state} value={item.state}>
+                        {item.state}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* District */}
+              <div className="form-group">
+                <div className="input-icon">
+                  <FaBuilding />
+                  <select
+                    name="districtName"
+                    value={formData.districtName}
+                    onChange={handleChange}
+                    required
+                    disabled={!formData.state}
+                  >
+                    <option value="">Select District</option>
+                    {selectedState?.districts.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </>
           )}
 
-          {/* Password fields */}
+          {formData.role === "worker" && (
+            <>
+              {/* State */}
+              <div className="form-group">
+                <div className="input-icon">
+                  <FaBuilding />
+                  <select
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select State</option>
+                    {statesAndDistricts.map((item) => (
+                      <option key={item.state} value={item.state}>
+                        {item.state}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* District */}
+              <div className="form-group">
+                <div className="input-icon">
+                  <FaBuilding />
+                  <select
+                    name="districtName"
+                    value={formData.districtName}
+                    onChange={handleChange}
+                    required
+                    disabled={!formData.state}
+                  >
+                    <option value="">Select District</option>
+                    {selectedState?.districts.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Department */}
+              <div className="form-group">
+                <div className="input-icon">
+                  <FaBuilding />
+                  <select
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Roads & Transport">Roads & Transport</option>
+                    <option value="Public Health & Sanitation">
+                      Public Health & Sanitation
+                    </option>
+                    <option value="Waste Management">Waste Management</option>
+                    <option value="Drainage & Sewerage">
+                      Drainage & Sewerage
+                    </option>
+                    <option value="Pollution Control">Pollution Control</option>
+                    <option value="Water Supply">Water Supply</option>
+                    <option value="Parks & Trees">Parks & Trees</option>
+                    <option value="Public Safety">Public Safety</option>
+                    <option value="Streetlights">Streetlights</option>
+                    <option value="Building & Construction">
+                      Building & Construction
+                    </option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Password */}
           <div className="form-group">
             <div className="input-icon">
               <FaLock />
@@ -185,6 +315,7 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Confirm Password */}
           <div className="form-group">
             <div className="input-icon">
               <FaLock />
@@ -207,8 +338,8 @@ const Register = () => {
             </div>
           </div>
 
-          <button type="submit" className="auth-button">
-            Create Account
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? "Registering..." : "Create Account"}
           </button>
         </form>
 

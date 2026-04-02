@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import Navbar from "../Navbar/Navbar";
+import Navbar from "../Navbar/Navbar"; // Ensure correct path
 import "./UserProfile.css";
-import { getUserProfile } from "../../services/api"
+import { getUserProfile } from "../../services/api";
+
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
- const token = localStorage.getItem("token");
   const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState("issues");
 
-  // ✅ Load logged-in user from localStorage
   const currentUser = JSON.parse(localStorage.getItem("user"));
-  console.log("Current User:", currentUser);
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -27,10 +26,7 @@ const UserProfile = () => {
   }, [userId]);
 
   const handleChatClick = () => {
-    console.log("Starting chat with:", profile);
-    console.log("Current User:", currentUser);
     if (!currentUser || !profile) return;
-
     navigate("/chat", {
       state: {
         currentUser,
@@ -39,117 +35,143 @@ const UserProfile = () => {
     });
   };
 
-  if (!profile) return <div>Loading...</div>;
-
+  // --- RENDER ---
   return (
     <>
-      <Navbar />
-      <div className="user-profile-container">
-        <div className="profile-header">
-          <div className="avatar-placeholder">
-            {profile.profileImage ? (
-              <a
-                href={profile.profileImage}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src={profile.profileImage}
-                  alt="Profile"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                  }}
-                />
-              </a>
-            ) : (
-              <div className="default-avatar">No Image</div>
-            )}
+      <Navbar /> {/* Navbar is always visible now */}
+      <div className="profile-page-wrapper">
+        {!profile ? (
+          /* Loading State centered below Navbar */
+          <div className="profile-loading-state">
+            <div className="spinner"></div>
+            <p>Loading Profile...</p>
           </div>
+        ) : (
+          /* Main Content */
+          <div className="user-profile-container">
+            {/* Header Section */}
+            <div className="profile-header-card">
+              <div className="profile-header-top">
+                <div className="avatar-section">
+                  {profile.profileImage ? (
+                    <img
+                      src={profile.profileImage}
+                      alt="Profile"
+                      className="profile-avatar"
+                    />
+                  ) : (
+                    <div className="default-avatar">
+                      {profile.username?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
 
-          <div>
-            <h2>{profile.username}</h2>
-            <p>
-              {profile?.bio ||
-                " Always ready to help make our city a better place to live."}
-            </p>
-            <div>
-              <span>
-                Joined {new Date(profile.joined).toLocaleDateString()}
-              </span>
+                <div className="info-section">
+                  <div className="name-row">
+                    <h2>{profile.username}</h2>
+                    {currentUser?._id !== profile._id && (
+                      <button className="chat-btn" onClick={handleChatClick}>
+                        Message
+                      </button>
+                    )}
+                  </div>
+                  <p className="profile-bio">
+                    {profile?.bio || "CivicTracker Member"}
+                  </p>
+                  <span className="joined-date">
+                    Joined {new Date(profile.joined).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              <div className="profile-stats-row">
+                <div className="stat-item">
+                  <strong>{profile.issuesReported || 0}</strong>
+                  <span>Issues</span>
+                </div>
+                <div className="stat-divider"></div>
+                <div className="stat-item">
+                  <strong>{profile.commentsCount || 0}</strong>
+                  <span>Comments</span>
+                </div>
+                <div className="stat-divider"></div>
+                <div className="stat-item">
+                  <strong>{profile.totalUpvotes || 0}</strong>
+                  <span>Upvotes</span>
+                </div>
+              </div>
             </div>
 
-            
-          </div>
+            {/* Tabs */}
+            <div className="profile-tabs">
+              <button
+                onClick={() => setTab("issues")}
+                className={`tab-btn ${tab === "issues" ? "active" : ""}`}
+              >
+                Reported Issues
+              </button>
+              <button
+                onClick={() => setTab("comments")}
+                className={`tab-btn ${tab === "comments" ? "active" : ""}`}
+              >
+                Recent Comments
+              </button>
+            </div>
 
-          {currentUser?._id !== profile._id && (
-            <button className="chat-btn" onClick={handleChatClick}>
-              Start Chat
-            </button>
-          )}
-
-        </div>
-
-        <div className="profile-stats">
-          <span>
-            <b>{profile.issuesReported}</b> Issues Reported
-          </span>
-          <span>
-            <b>{profile.commentsCount}</b> Comments
-          </span>
-          <span>
-            <b>{profile.totalUpvotes}</b> Total Upvotes
-          </span>
-        </div>
-
-        <div className="profile-tabs">
-          <button
-            onClick={() => setTab("issues")}
-            className={tab === "issues" ? "active" : ""}
-          >
-            Reported Issues
-          </button>
-          <button
-            onClick={() => setTab("comments")}
-            className={tab === "comments" ? "active" : ""}
-          >
-            Recent Comments
-          </button>
-        </div>
-
-        {tab === "issues" && (
-          <div className="reported-issues-list">
-            {profile.reportedIssues.map((issue) => (
-              <div key={issue._id} className="issue-card">
-                <span className={`status-badge ${issue.status}`}>
-                  {issue.status}
-                </span>
-                <Link to={`/issue/${issue._id}`}>
-                  <b>{issue.title}</b>
-                </Link>
-                <div>
-                  <span>👍 {issue.upvotes?.length || 0} upvotes</span>
-                  <span>💬 {issue.comments?.length || 0} comments</span>
+            {/* Content Area */}
+            <div className="profile-content-area">
+              {tab === "issues" && (
+                <div className="list-grid">
+                  {profile.reportedIssues?.length > 0 ? (
+                    profile.reportedIssues.map((issue) => (
+                      <div key={issue._id} className="item-card issue">
+                        <div className="card-header">
+                          <span className={`status-badge ${issue.status}`}>
+                            {issue.status}
+                          </span>
+                          <span className="card-date">
+                            {new Date(issue.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <Link to={`/issue/${issue._id}`} className="card-title">
+                          {issue.title}
+                        </Link>
+                        <div className="card-footer">
+                          <span>👍 {issue.upvotes?.length || 0}</span>
+                          <span>💬 {issue.comments?.length || 0}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">No issues reported yet.</div>
+                  )}
                 </div>
-                <div>{new Date(issue.createdAt).toLocaleDateString()}</div>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
 
-        {tab === "comments" && (
-          <div className="user-comments-list">
-            {profile.comments.map((c, idx) => (
-              <div key={idx} className="comment-card">
-                <Link to={`/issue/${c.issue?._id}`}>
-                  {c.issue?.title || "Issue"}
-                </Link>
-                <div>{c.text}</div>
-                <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-              </div>
-            ))}
+              {tab === "comments" && (
+                <div className="list-grid">
+                  {profile.comments?.length > 0 ? (
+                    profile.comments.map((c, idx) => (
+                      <div key={idx} className="item-card comment">
+                        <Link
+                          to={`/issue/${c.issue?._id}`}
+                          className="comment-link"
+                        >
+                          On: {c.issue?.title || "Deleted Issue"}
+                        </Link>
+                        <p className="comment-text">"{c.text}"</p>
+                        <span className="card-date">
+                          {new Date(c.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">No comments yet.</div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

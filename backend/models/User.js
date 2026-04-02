@@ -12,11 +12,31 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "superadmin", "worker"],
       default: "user",
     },
     districtCode: String,
+    state: String,
+    districtName: String,
     employeeId: String,
+    department: {
+      type: String,
+      enum: [
+        "Electricity",
+        "Roads & Transport",
+        "Public Health & Sanitation",
+        "Waste Management",
+        "Drainage & Sewerage",
+        "Pollution Control",
+        "Water Supply",
+        "Parks & Trees",
+        "Public Safety",
+        "Streetlights",
+        "Building & Construction",
+        "Others",
+      ],
+      default: "Others",
+    },
 
     profileImage: {
       type: String, // e.g., URL to S3 or server path
@@ -67,6 +87,10 @@ const userSchema = new mongoose.Schema(
     lastActive: {
       type: Date,
       default: Date.now,
+    },
+    totalAssigned: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

@@ -5,7 +5,7 @@ const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
       .select(
-        "_id username email createdAt comments reports bio profileImage unsolvedIssues inProgressIssues solvedIssues"
+        "_id username email createdAt comments reports bio profileImage unsolvedIssues inProgressIssues solvedIssues state districtName"
       )
       .populate({
         path: "reports",
@@ -42,7 +42,8 @@ const getUserProfile = async (req, res) => {
       unsolvedCount: (user.unsolvedIssues || []).length,
       inProgressCount: (user.inProgressIssues || []).length,
       solvedCount: (user.solvedIssues || []).length,
-      districtCode:user.districtCode
+      state: user.state || null,
+      districtName: user.districtName || null,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });

@@ -8,19 +8,15 @@ import {
   FaMapMarkerAlt,
   FaImage,
 } from "react-icons/fa";
-
 import Navbar from "../Navbar/Navbar";
-const statusColors = {
-  reported: "red",
-  "in progress": "goldenrod",
-  resolved: "green",
-};
 
 const Home = () => {
   const navigate = useNavigate();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Filters state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
@@ -39,7 +35,7 @@ const Home = () => {
         (issue) =>
           issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           issue.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          issue.location.address
+          (issue.location?.address || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase())
       );
@@ -48,7 +44,7 @@ const Home = () => {
     // Status filter
     if (statusFilter !== "all") {
       result = result.filter(
-        (issue) => issue.status.toLowerCase() === statusFilter.toLowerCase()
+        (issue) => issue.status?.toLowerCase() === statusFilter.toLowerCase()
       );
     }
 
@@ -67,7 +63,7 @@ const Home = () => {
 
   const fetchIssues = async () => {
     try {
-      const response = await getAllIssues(); // Axios handles token via interceptor
+      const response = await getAllIssues();
       setIssues(response.data);
       setLoading(false);
     } catch (err) {
@@ -80,113 +76,174 @@ const Home = () => {
     navigate(`/issue/${issueId}`);
   };
 
-  const handleReportClick = () => {
-    navigate("/report");
-  };
-
-  if (loading) {
-    return <div className="loading">Loading issues...</div>;
-  }
-
-  if (error) {
-    return <div className="error">Error: {error}</div>;
-  }
-
   return (
     <div className="home-layout">
+      {/* Navbar always visible */}
       <Navbar />
+
       <div className="home-container">
-        <section className="content">
-          <div className="hero-section">
-            <div className="hero-text">
-              <h3>Civic Issues</h3>
-              <p>Report and track community problems in your area</p>
+        {/* Loading State */}
+        {loading && (
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Loading community issues...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && error && (
+          <div className="error-container">
+            <p>Error: {error}</p>
+            <button onClick={fetchIssues} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Main Content (Only shown when not loading & no error) */}
+        {!loading && !error && (
+          <section className="content">
+            {/* Hero Section */}
+            <div className="hero-section">
+              <div className="hero-text">
+                <h3>Civic Issues</h3>
+                <p>Report and track community problems in your area</p>
+              </div>
             </div>
-          </div>
 
-          <div className="filters">
-            <input
-              type="text"
-              placeholder="Search issues..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="unsolved">unsolved</option>
-              <option value="in progress">In Progress</option>
-              <option value="solved">Solved</option>
-            </select>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="recent">Recent Activity</option>
-              <option value="upvotes">Most Upvoted</option>
-            </select>
-          </div>
+            {/* Filter Bar */}
+            <div className="filters-bar">
+              <div className="search-wrapper">
+                <input
+                  type="text"
+                  placeholder="Search issues, locations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+              </div>
 
-          <div className="issues-grid">
-            {filteredIssues.map((issue) => (
-              <div
-                key={issue._id}
-                className="issue-card"
-                onClick={() => handleIssueClick(issue._id)}
-                style={{ cursor: "pointer" }}
-              >
-                <div className="issue-image-container">
-                  {issue.images && issue.images.length > 0 ? (
-                    <img
-                      src={issue.images[0]}
-                      alt={issue.title}
-                      className="issue-image"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = "none";
-                        e.target.parentElement.innerHTML = `
-                        <div class="image-placeholder">
-                          <div class="image-placeholder-content">
-                            <FaImage />
-                            <span>No image available</span>
-                          </div>
+              <div className="select-wrapper">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="all">All Status</option>
+                  <option value="unsolved">Unsolved</option>
+                  <option value="in progress">In Progress</option>
+                  <option value="solved">Solved</option>
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="recent">Recent Activity</option>
+                  <option value="upvotes">Most Upvoted</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Issues Grid */}
+            <div className="issues-grid">
+              {filteredIssues.length > 0 ? (
+                filteredIssues.map((issue) => (
+                  <div
+                    key={issue._id}
+                    className="issue-card"
+                    onClick={() => handleIssueClick(issue._id)}
+                  >
+                    <div className="issue-image-container">
+                      {issue.images && issue.images.length > 0 ? (
+                        <img
+                          src={issue.images[0]}
+                          alt={issue.title}
+                          className="issue-image"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.style.display = "none";
+                            e.target.parentElement.classList.add("has-error");
+                          }}
+                        />
+                      ) : (
+                        <div className="image-placeholder">
+                          <FaImage />
+                          <span>No image available</span>
                         </div>
-                      `;
-                      }}
-                    />
-                  ) : (
-                    <div className="image-placeholder">
-                      <div className="image-placeholder-content">
+                      )}
+
+                      {/* Fallback for broken image */}
+                      <div className="image-placeholder fallback">
                         <FaImage />
-                        <span>No image available</span>
+                        <span>Image unavailable</span>
+                      </div>
+
+                      <span
+                        className={`status-badge ${issue.status
+                          ?.toLowerCase()
+                          .replace(" ", "_")}`}
+                      >
+                        {issue.status}
+                      </span>
+                    </div>
+
+                    <div className="issue-card-content">
+                      <div className="issue-header-row">
+                        <span className="district-tag">
+                          {issue.districtCode || "General"}
+                        </span>
+                        <span className="date-tag">
+                          {new Date(issue.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <h3 className="issue-title">{issue.title}</h3>
+
+                      <p className="issue-description">
+                        {issue.description.length > 90
+                          ? `${issue.description.substring(0, 90)}...`
+                          : issue.description}
+                        {issue.description.length > 90 && (
+                          <span className="read-more">Read more</span>
+                        )}
+                      </p>
+
+                      <div className="location-row">
+                        <FaMapMarkerAlt />
+                        <span>
+                          {issue.location?.address || "Location unavailable"}
+                        </span>
+                      </div>
+
+                      <div className="card-footer">
+                        <div className="user-info">
+                          By{" "}
+                          <strong>
+                            {issue.createdBy?.username || "Unknown"}
+                          </strong>
+                        </div>
+                        <div className="stats-info">
+                          <span>
+                            <FaThumbsUp /> {issue.upvotes?.length || 0}
+                          </span>
+                          <span>
+                            <FaCommentDots /> {issue.comments?.length || 0}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                ))
+              ) : (
+                <div className="no-results">
+                  <p>No issues found matching your filters.</p>
                 </div>
-                <span className="status-badge reported">{issue.status}</span>
-
-                <h3 className="issue-title">{issue.title}</h3>
-                <p className="issue-description">
-                  {issue.description.length > 100
-                    ? `${issue.description.substring(0, 100)}`
-                    : issue.description}...Read more
-                </p>
-                <p className="location">
-                  <FaMapMarkerAlt /> {issue.location.address}
-                </p>
-                <p className="user">{issue.createdBy.username}</p>
-                <div className="card-footer">
-                  <span>
-                    <FaThumbsUp /> {issue.upvotes?.length || 0}
-                  </span>
-                  <span>
-                    <FaCommentDots /> {issue.comments?.length || 0}
-                  </span>
-                </div>
-                <div className="district">{issue.districtCode}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

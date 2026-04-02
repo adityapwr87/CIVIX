@@ -8,7 +8,7 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import "./Auth.css";
-import { login } from "../../services/api"; 
+import { login } from "../../services/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ const Login = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +29,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
     // Add your login logic here
     try {
       const response = await login(formData); // POST /auth/login
@@ -39,12 +42,14 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("details", JSON.stringify(data.details));
 
-      navigate("/dashboard");
+    navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message);
       setError(
         err.response?.data?.message || "Failed to login. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,8 +105,8 @@ const Login = () => {
             </div>
           </div>
 
-          <button type="submit" className="auth-button">
-            Sign In
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? "Logging in..." : "Sign In"}
           </button>
         </form>
 

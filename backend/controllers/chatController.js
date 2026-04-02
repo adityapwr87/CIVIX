@@ -29,3 +29,4 @@ exports.getChatHistory = async (req, res) => {
     res.status(500).json({ msg: "Failed to fetch chat history" });
   }
 };
+
