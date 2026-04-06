@@ -12,6 +12,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaEdit,
+  FaExclamationCircle
 } from "react-icons/fa";
 import Navbar from "../Navbar/Navbar";
 
@@ -23,7 +24,11 @@ const WorkerIssueDetails = () => {
   const [loading, setLoading] = useState(true);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  
+  const [showStatusModal, setShowStatusModal] = useState(false); 
+  // 🔥 NEW: Track if the status update is currently in progress
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false); 
+  
   const userId = JSON.parse(localStorage.getItem("user"))._id;
 
   useEffect(() => {
@@ -43,6 +48,7 @@ const WorkerIssueDetails = () => {
 
     if (id) fetchIssue();
   }, [id]);
+
   useEffect(() => {
     if (issue) {
       setHasUpvoted(issue.upvotes.includes(userId));
@@ -71,7 +77,7 @@ const WorkerIssueDetails = () => {
 
   const handleUpvote = async () => {
     try {
-      const res = await upvoteIssue(id); // Axios sends token via interceptor
+      const res = await upvoteIssue(id); 
 
       if (res.status === 200) {
         setIssue((prev) => ({
@@ -100,6 +106,8 @@ const WorkerIssueDetails = () => {
   };
 
   const handleStatusChange = async (newStatus) => {
+    // 🔥 CHANGED: Set updating state to true before API call
+    setIsUpdatingStatus(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -115,12 +123,14 @@ const WorkerIssueDetails = () => {
       );
 
       if (res.ok) {
-        const data = await res.json();
         setIssue((prev) => ({ ...prev, status: newStatus }));
-        setShowStatusDropdown(false);
+        setShowStatusModal(false); 
       }
     } catch (error) {
       console.error("Error updating status:", error);
+    } finally {
+      // 🔥 CHANGED: Reset updating state after API call finishes (success or fail)
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -134,15 +144,87 @@ const WorkerIssueDetails = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!issue) return <div>Issue not found</div>;
-  console.log(issue);
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+          <div className="spinner"></div>
+          <p style={{ marginTop: "16px", color: "#6b7280", fontSize: "1.1rem" }}>Loading issue details...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (!issue) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+          <h2 style={{ color: "#374151" }}>Issue not found</h2>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
-      {" "}
       <Navbar />
       <div className="issue-details-container">
+        
+        {/* Status Change Modal Overlay */}
+        {showStatusModal && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999,
+            display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+            <div style={{
+              backgroundColor: "#fff", padding: "24px", borderRadius: "12px",
+              width: "90%", maxWidth: "400px", textAlign: "center",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: "8px" }}>Update Issue Status</h3>
+              <p style={{ color: "#6b7280", marginBottom: "20px" }}>Select the current status for this issue.</p>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {/* 🔥 CHANGED: Button styling, text, and disabled property based on isUpdatingStatus */}
+                <button 
+                  onClick={() => handleStatusChange("solved")}
+                  disabled={isUpdatingStatus}
+                  style={{ 
+                    padding: "12px", 
+                    backgroundColor: isUpdatingStatus ? "#9ca3af" : "#10b981", // Gray out if loading
+                    color: "#fff", 
+                    border: "none", 
+                    borderRadius: "6px", 
+                    cursor: isUpdatingStatus ? "not-allowed" : "pointer", 
+                    fontWeight: "bold" 
+                  }}
+                >
+                  {isUpdatingStatus ? "Updating issue status..." : "Mark as Solved"}
+                </button>
+                <button 
+                  onClick={() => setShowStatusModal(false)}
+                  disabled={isUpdatingStatus}
+                  style={{ 
+                    padding: "12px", 
+                    backgroundColor: "#e5e7eb", 
+                    color: "#374151", 
+                    border: "none", 
+                    borderRadius: "6px", 
+                    cursor: isUpdatingStatus ? "not-allowed" : "pointer", 
+                    fontWeight: "bold", 
+                    marginTop: "10px" 
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="issue-main-card">
           <div className="issue-header-row2">
             <div className="status-section2">
@@ -152,9 +234,10 @@ const WorkerIssueDetails = () => {
               <span className="meta-item department-tag">
                 🏷️ {issue.department}
               </span>
+              
               <button
                 className="change-status-btn"
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                onClick={() => setShowStatusModal(true)}
               >
                 <FaEdit /> Change Status
               </button>
@@ -165,14 +248,6 @@ const WorkerIssueDetails = () => {
               >
                 📍 View Location
               </button>
-
-              {showStatusDropdown && (
-                <div className="status-dropdown">
-                  <button onClick={() => handleStatusChange("solved")}>
-                    Solved
-                  </button>
-                </div>
-              )}
             </div>
 
             <span className="issue-district2">
@@ -182,6 +257,26 @@ const WorkerIssueDetails = () => {
           </div>
 
           <h1 className="issue-title">{issue.title}</h1>
+
+          {/* Re-Report Reason Box */}
+          {(issue.status === "re-reported") && (
+            <div style={{
+              backgroundColor: "#fef2f2",
+              borderLeft: "5px solid #ef4444",
+              padding: "16px",
+              marginBottom: "20px",
+              borderRadius: "4px"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", color: "#b91c1c", fontWeight: "bold", marginBottom: "8px" }}>
+                <FaExclamationCircle style={{ marginRight: "8px" }} />
+                This issue was Re-Reported
+              </div>
+              <p style={{ margin: 0, color: "#7f1d1d", fontSize: "0.95rem" }}>
+                <strong>Reason: </strong> {issue.reReportReason || "No reason provided by the user."}
+              </p>
+            </div>
+          )}
+
           <div className="issue-image-container issue-detail-image">
             {issue.images && issue.images.length > 0 ? (
               <>
@@ -281,62 +376,6 @@ const WorkerIssueDetails = () => {
               </span>
             </div>
           </div>
-        </div>
-        <div className="issue-details-comments">
-          <div className="comments-header">
-            <FaCommentDots style={{ marginRight: 8 }} />
-            <span>
-              Comments {issue.comments ? `(${issue.comments.length})` : ""}
-            </span>
-          </div>
-          <div className="comments-list">
-            {issue.comments && issue.comments.length > 0 ? (
-              issue.comments.map((c, idx) => (
-                <div key={idx} className="comment-block">
-                  <div className="comment-avatar" />
-                  <div className="comment-content">
-                    <div className="comment-meta">
-                      <span
-                        className="comment-user"
-                        onClick={() => navigate(`/user/${c.user._id}`)}
-                      >
-                        {c.user.username}
-                      </span>
-                      <span className="comment-date">
-                        {new Date(c.createdAt).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                    <div className="comment-text">{c.text}</div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div>No comments yet.</div>
-            )}
-          </div>
-          <form className="comment-form" onSubmit={handleCommentSubmit}>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Add a comment..."
-              required
-              rows={3}
-            />
-            <button type="submit">
-              <span style={{ marginRight: 6, display: "inline-block" }}>
-                <svg width="18" height="18" fill="currentColor">
-                  <path d="M2 16l14-7L2 2v5l10 2-10 2z" />
-                </svg>
-              </span>
-              Post Comment
-            </button>
-          </form>
         </div>
       </div>
     </>

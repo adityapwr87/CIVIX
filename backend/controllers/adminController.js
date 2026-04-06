@@ -12,25 +12,27 @@ const getDistrictIssues = async (req, res) => {
       return res.status(403).json({ success: false, message: "Access denied." });
     }
 
-    // Fetch ALL issues for this admin's district
-    // This will automatically include the 'location' field
-    const allIssues = await Issue.find({ districtCode: admin.districtCode })
+    // 🔥 UPDATED: Fetch ALL issues matching BOTH the admin's state and districtCode
+    const allIssues = await Issue.find({ 
+      state: admin.state, 
+      districtCode: admin.districtCode 
+    })
       .populate("createdBy", "username email")
       .sort({ createdAt: -1 });
 
     // Group them manually in the controller
     const groupedIssues = {
       unsolved: allIssues.filter(issue => issue.status === "unsolved"),
-      inProgress: allIssues.filter(issue => issue.status === "in progress"), // or "progress" based on your logic
+      inProgress: allIssues.filter(issue => issue.status === "in progress"), 
       solved: allIssues.filter(issue => issue.status === "solved"),
+      reReported: allIssues.filter(issue => issue.status === "re-reported"),
       total: allIssues.length,
     };
-    console.log("Grouped Issues for District:", groupedIssues);
 
     res.status(200).json({
       success: true,
       data: groupedIssues,
-      message: "District issues (including location) retrieved successfully",
+      message: "District issues retrieved successfully",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -41,11 +43,7 @@ const getDistrictIssues = async (req, res) => {
 const autoAssignIssues = async (req, res) => {
   try {
     const adminId = req.user._id;
-    // populate unsolvedIssues so we can use admin.unsolvedIssues as source
-    const admin = await User.findById(adminId).populate({
-      path: "unsolvedIssues",
-      populate: { path: "createdBy", select: "username email" },
-    });
+    const admin = await User.findById(adminId);
 
     if (!admin || (admin.role !== "admin" && admin.role !== "superadmin")) {
       return res
@@ -53,7 +51,12 @@ const autoAssignIssues = async (req, res) => {
         .json({ success: false, message: "Admin access required" });
     }
 
-    const unsolvedIssues = admin.unsolvedIssues || [];
+    // 🔥 1. Fetch unsolved issues directly from the Issue collection
+    const unsolvedIssues = await Issue.find({
+      state: admin.state,
+      districtCode: admin.districtCode,
+      status: "unsolved",
+    }).populate("createdBy", "username email");
 
     if (!unsolvedIssues.length) {
       return res
@@ -61,7 +64,7 @@ const autoAssignIssues = async (req, res) => {
         .json({ success: true, message: "No unsolved issues to assign" });
     }
 
-    // Find workers in the same district
+    // 🔥 2. Find workers in the same district
     const workers = await User.find({
       role: "worker",
       state: admin.state,
@@ -92,6 +95,7 @@ const autoAssignIssues = async (req, res) => {
     });
 
     const assignments = [];
+    let assignedCount = 0; // Track how many issues actually get assigned
 
     // For each department, distribute issues among workers evenly
     for (const dept of Object.keys(issuesByDept)) {
@@ -115,7 +119,7 @@ const autoAssignIssues = async (req, res) => {
         const chosen = pool[0];
 
         // Update issue: assignedWorker, assignedAt, status -> in progress
-        const updated = await Issue.findByIdAndUpdate(
+        await Issue.findByIdAndUpdate(
           issue._id,
           {
             assignedWorker: chosen._id,
@@ -123,31 +127,27 @@ const autoAssignIssues = async (req, res) => {
             status: "in progress",
             updatedAt: new Date(),
           },
-          { new: true },
+          { new: true }
         );
 
-        // Update worker counts and assign to worker's unsolvedIssues
+        // 🔥 3. Update worker counts instead of arrays
+        // Increment totalAssigned and inProgressCount
         await User.findByIdAndUpdate(chosen._id, {
-          $inc: { totalAssigned: 1 },
-          $push: { unsolvedIssues: issue._id },
-          $pull: { inProgressIssues: issue._id },
-        });
-
-        // Update admin lists: move from unsolved to inProgress
-        await User.findByIdAndUpdate(admin._id, {
-          $pull: { unsolvedIssues: issue._id },
-          $push: { inProgressIssues: issue._id },
+          $inc: { 
+            totalAssigned: 1, 
+            inProgressCount: 1 
+          },
         });
 
         // Update local pool count
         pool[0].totalAssigned += 1;
+        assignedCount++;
 
         // Send Email to User
         try {
-          const user = await User.findById(issue.createdBy);
-          if (user && user.email) {
+          if (issue.createdBy && issue.createdBy.email) {
             await sendEmail({
-              email: user.email,
+              email: issue.createdBy.email,
               subject: "Update on your Issue - CIVIX",
               message: `
                 <h3>Your issue "${issue.title}" has been assigned to a worker.</h3>
@@ -182,6 +182,17 @@ const autoAssignIssues = async (req, res) => {
 
         assignments.push({ issueId: issue._id, workerId: chosen._id });
       }
+    }
+
+    // 🔥 4. Update Admin Counts
+    // Decrease unsolvedCount, increase inProgressCount by the total number of issues assigned
+    if (assignedCount > 0) {
+      await User.findByIdAndUpdate(admin._id, {
+        $inc: {
+          unsolvedCount: -assignedCount,
+          inProgressCount: assignedCount,
+        },
+      });
     }
 
     res
@@ -260,11 +271,6 @@ const assignIssueToWorker = async (req, res) => {
         .json({ success: false, message: "Issue not found" });
     }
 
-    // Check if issue is already assigned or solved?
-    // User request: "assign the signle issue to the signle worker"
-    // I should probably check if it's already assigned to someone else, but request implies just doing the assignment.
-    // However, moving from "unsolved" to "in progress" implies it's currently unsolved.
-
     // 2. Find the worker
     const worker = await User.findById(workerId);
     if (!worker || worker.role !== "worker") {
@@ -284,20 +290,36 @@ const assignIssueToWorker = async (req, res) => {
       { new: true },
     );
 
-    // 4. Update Admin (pull from unsolved, push to inProgress)
+    // 🔥 4. Update Admin Counts
+    // Decrease unsolvedCount by 1, increase inProgressCount by 1
     await User.findByIdAndUpdate(adminId, {
-      $pull: { unsolvedIssues: issueId },
-      $push: { inProgressIssues: issueId },
+      $inc: { 
+        unsolvedCount: -1, 
+        inProgressCount: 1 
+      },
     });
 
-    // 5. Update Worker (push to unsolvedIssues, inc totalAssigned)
+    // 🔥 5. Update Worker Counts
+    // Increase their total assigned count and in-progress count
     await User.findByIdAndUpdate(workerId, {
-      $push: { unsolvedIssues: issueId },
-      // remove from others if reassigning? simpler to assume fresh assignment from unsolved
-      $inc: { totalAssigned: 1 },
+      $inc: { 
+        totalAssigned: 1, 
+        inProgressCount: 1 
+      },
     });
 
-    // 6. Notify Worker via Socket
+    // 🔥 6. Update User (Reporter) Counts
+    // Decrease unsolvedCount by 1, increase inProgressCount by 1
+    if (issue.createdBy) {
+      await User.findByIdAndUpdate(issue.createdBy, {
+        $inc: { 
+          unsolvedCount: -1, 
+          inProgressCount: 1 
+        },
+      });
+    }
+
+    // 7. Notify Worker via Socket
     try {
       const socketHelper = require("../socket");
       const io = socketHelper.getIO();
@@ -313,7 +335,7 @@ const assignIssueToWorker = async (req, res) => {
       console.error("Socket emit error:", err);
     }
 
-    // 7. Send Email to Issue Creator
+    // 8. Send Email to Issue Creator
     try {
       const user = await User.findById(issue.createdBy);
       if (user && user.email) {

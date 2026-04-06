@@ -147,101 +147,101 @@ const Home = () => {
             </div>
 
             {/* Issues Grid */}
-            <div className="issues-grid">
-              {filteredIssues.length > 0 ? (
-                filteredIssues.map((issue) => (
-                  <div
-                    key={issue._id}
-                    className="issue-card"
-                    onClick={() => handleIssueClick(issue._id)}
-                  >
-                    <div className="issue-image-container">
-                      {issue.images && issue.images.length > 0 ? (
-                        <img
-                          src={issue.images[0]}
-                          alt={issue.title}
-                          className="issue-image"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.style.display = "none";
-                            e.target.parentElement.classList.add("has-error");
-                          }}
-                        />
-                      ) : (
-                        <div className="image-placeholder">
-                          <FaImage />
-                          <span>No image available</span>
-                        </div>
-                      )}
-
-                      {/* Fallback for broken image */}
-                      <div className="image-placeholder fallback">
-                        <FaImage />
-                        <span>Image unavailable</span>
-                      </div>
-
-                      <span
-                        className={`status-badge ${issue.status
-                          ?.toLowerCase()
-                          .replace(" ", "_")}`}
-                      >
-                        {issue.status}
-                      </span>
-                    </div>
-
-                    <div className="issue-card-content">
-                      <div className="issue-header-row">
-                        <span className="district-tag">
-                          {issue.districtCode || "General"}
-                        </span>
-                        <span className="date-tag">
-                          {new Date(issue.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      <h3 className="issue-title">{issue.title}</h3>
-
-                      <p className="issue-description">
-                        {issue.description.length > 90
-                          ? `${issue.description.substring(0, 90)}...`
-                          : issue.description}
-                        {issue.description.length > 90 && (
-                          <span className="read-more">Read more</span>
-                        )}
-                      </p>
-
-                      <div className="location-row">
-                        <FaMapMarkerAlt />
-                        <span>
-                          {issue.location?.address || "Location unavailable"}
-                        </span>
-                      </div>
-
-                      <div className="card-footer">
-                        <div className="user-info">
-                          By{" "}
-                          <strong>
-                            {issue.createdBy?.username || "Unknown"}
-                          </strong>
-                        </div>
-                        <div className="stats-info">
-                          <span>
-                            <FaThumbsUp /> {issue.upvotes?.length || 0}
-                          </span>
-                          <span>
-                            <FaCommentDots /> {issue.comments?.length || 0}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="no-results">
-                  <p>No issues found matching your filters.</p>
-                </div>
-              )}
+            <div className="civix-card-layout">
+  {filteredIssues.length > 0 ? (
+    filteredIssues.map((issue) => (
+      <div
+        key={issue._id}
+        className="civix-item-card"
+        onClick={() => handleIssueClick(issue._id)}
+      >
+        <div className="civix-card-media">
+          {issue.images && issue.images.length > 0 ? (
+            <img
+              src={issue.images[0]}
+              alt={issue.title}
+              className="civix-media-img"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = "none";
+                e.target.parentElement.classList.add("has-error");
+              }}
+            />
+          ) : (
+            <div className="civix-media-empty">
+              <FaImage />
+              <span>No image available</span>
             </div>
+          )}
+
+          {/* Fallback for broken image */}
+          <div className="civix-media-empty civix-media-fallback">
+            <FaImage />
+            <span>Image unavailable</span>
+          </div>
+
+          <span
+            className={`civix-badge ${issue.status
+              ?.toLowerCase()
+              .replace(" ", "_")}`}
+          >
+            {issue.status}
+          </span>
+        </div>
+
+        <div className="civix-card-body">
+          <div className="civix-card-top-row">
+            <span className="civix-tag-district">
+              {issue.districtCode || "General"}
+            </span>
+            <span className="civix-tag-date">
+              {new Date(issue.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+
+          <h3 className="civix-card-title">{issue.title}</h3>
+
+          <p className="civix-card-desc">
+            {issue.description.length > 90
+              ? `${issue.description.substring(0, 90)}...`
+              : issue.description}
+            {issue.description.length > 90 && (
+              <span className="civix-read-more">Read more</span>
+            )}
+          </p>
+
+          <div className="civix-card-location">
+            <FaMapMarkerAlt />
+            <span>
+              {issue.location?.address || "Location unavailable"}
+            </span>
+          </div>
+
+          <div className="civix-card-bottom">
+            <div className="civix-author-info">
+              By{" "}
+              <strong>
+                {issue.createdBy?.username || "Unknown"}
+              </strong>
+            </div>
+            <div className="civix-metrics">
+              <span>
+                <FaThumbsUp /> {issue.upvotes?.length || 0}
+              </span>
+              <span>
+                <FaCommentDots /> {issue.comments?.length || 0}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))
+  ) : (
+    <div className="civix-empty-state">
+      <p>No issues found matching your filters.</p>
+    </div>
+  )}
+</div>
           </section>
         )}
       </div>

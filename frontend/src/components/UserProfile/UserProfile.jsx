@@ -91,10 +91,6 @@ const UserProfile = () => {
                   <span>Issues</span>
                 </div>
                 <div className="stat-divider"></div>
-                <div className="stat-item">
-                  <strong>{profile.commentsCount || 0}</strong>
-                  <span>Comments</span>
-                </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
                   <strong>{profile.totalUpvotes || 0}</strong>
@@ -110,12 +106,6 @@ const UserProfile = () => {
                 className={`tab-btn ${tab === "issues" ? "active" : ""}`}
               >
                 Reported Issues
-              </button>
-              <button
-                onClick={() => setTab("comments")}
-                className={`tab-btn ${tab === "comments" ? "active" : ""}`}
-              >
-                Recent Comments
               </button>
             </div>
 
@@ -139,7 +129,6 @@ const UserProfile = () => {
                         </Link>
                         <div className="card-footer">
                           <span>👍 {issue.upvotes?.length || 0}</span>
-                          <span>💬 {issue.comments?.length || 0}</span>
                         </div>
                       </div>
                     ))
@@ -149,28 +138,6 @@ const UserProfile = () => {
                 </div>
               )}
 
-              {tab === "comments" && (
-                <div className="list-grid">
-                  {profile.comments?.length > 0 ? (
-                    profile.comments.map((c, idx) => (
-                      <div key={idx} className="item-card comment">
-                        <Link
-                          to={`/issue/${c.issue?._id}`}
-                          className="comment-link"
-                        >
-                          On: {c.issue?.title || "Deleted Issue"}
-                        </Link>
-                        <p className="comment-text">"{c.text}"</p>
-                        <span className="card-date">
-                          {new Date(c.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="empty-state">No comments yet.</div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         )}

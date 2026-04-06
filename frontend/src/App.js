@@ -30,6 +30,7 @@ import AdminProfile from "./components/Profile/AdminProfile";
 import Notifications from "./components/Notification/Notifications";
 import WorkerIssueDetails from "./components/Worker/WorkerIssueDetails";
 import HeatmapPage from "./components/Admin/HeatmapPage";
+import Worker_profile from "./components/Profile/Worker_Profile";
 import { getSocket } from "./socket";
 
 /* -------------------- */
@@ -142,12 +143,34 @@ function AppContent() {
         onClick: () => navigate("/notifications"),
       });
     };
+    const handleIssueAssigned = (data) => {
+      toast.info(`${data.message}`, {
+        autoClose: 5000,
+        progressStyle: { background: "#3b82f6", height: "4px" }, // Blue progress bar for assignments
+        style: {
+          background: "#ffffff",
+          color: "#1d4ed8", // Deep blue text
+          border: "1px solid #dbeafe", 
+          borderRadius: "12px",
+          boxShadow: "0 8px 24px rgba(59, 130, 246, 0.15)", // Blue glow
+          fontSize: "15px",
+          fontWeight: "600",
+          letterSpacing: "0.5px",
+          padding: "16px",
+        },
+        icon: false,
+        // Clicking the toast takes the worker directly to the issue details!
+        onClick: () => navigate(`/worker/issue/${data.issueId}`), 
+      });
+    };
 
     socket.on("new_chat_message", handleNewMessage);
     socket.on("issue_status_changed", handleNewupdate);
+    socket.on("issue_assigned", handleIssueAssigned);
     return () => {
       socket.off("new_chat_message", handleNewMessage);
       socket.off("issue_status_changed", handleNewupdate);
+      socket.off("issue_assigned", handleIssueAssigned);
     };
   }, [location.pathname, navigate, socket]);
 
@@ -269,6 +292,15 @@ function AppContent() {
           element={
             <ProtectedRoute roles={["worker"]}>
               <HeatmapPage />
+            </ProtectedRoute>
+          }
+        />
+
+<Route
+          path="/worker/profile"
+          element={
+            <ProtectedRoute roles={["worker"]}>
+              <Worker_profile />
             </ProtectedRoute>
           }
         />

@@ -4,33 +4,39 @@ const Notification = require("../models/Notification");
 const socketHelper = require("../socket");
 const sendEmail = require("../utils/sendEmail");
 
-// Get worker profile (by id or current authenticated worker)
+
+
 const getWorkerProfile = async (req, res) => {
   try {
     const workerId = req.params.workerId || req.user._id;
 
+    // 1. Get ONLY the worker's basic info
     const worker = await User.findById(workerId)
-      .select(
-        "_id username email createdAt bio profileImage unsolvedIssues inProgressIssues solvedIssues state districtName department totalAssigned"
-      )
-      .populate({
-        path: "unsolvedIssues",
-        // Added 'location' here
-        select: "title status department createdAt assignedAt location", 
-      })
-      .populate({
-        path: "inProgressIssues",
-        // Added 'location' here
-        select: "title status department createdAt assignedAt location",
-      })
-      .populate({
-        path: "solvedIssues",
-        // Added 'location' here
-        select: "title status department createdAt solvedAt location",
-      });
+      .select("_id username email createdAt bio profileImage state districtName department totalAssigned");
 
     if (!worker) return res.status(404).json({ message: "Worker not found" });
 
+    // 2. Fetch issues: Combine 'unsolved' and 'in-progress' into a single query
+    const [unsolved, solved, reReported] = await Promise.all([
+      
+      // Grabs both statuses, but we assign it to the 'unsolved' variable
+      Issue.find({ 
+        assignedWorker: workerId, 
+        status: { $in: ["unsolved", "in progress"] } 
+      })
+        .select("title status department createdAt assignedAt location")
+        .sort({ updatedAt: -1 }), 
+        
+      Issue.find({ assignedWorker: workerId, status: "solved" })
+        .select("title status department createdAt solvedAt location")
+        .sort({ solvedAt: -1 }),
+        
+      Issue.find({ assignedWorker: workerId, status: "re-reported" }) 
+        .select("title status department createdAt reReports location")
+        .sort({ updatedAt: -1 })
+    ]);
+
+    // 3. Return the combined data exactly how your frontend expects it
     res.json({
       _id: worker._id,
       username: worker.username,
@@ -42,10 +48,12 @@ const getWorkerProfile = async (req, res) => {
       districtName: worker.districtName || null,
       department: worker.department || null,
       totalAssigned: worker.totalAssigned || 0,
-      unsolved: worker.unsolvedIssues || [],
-      inProgress: worker.inProgressIssues || [],
-      solved: worker.solvedIssues || [],
+      
+      unsolved,   // Now contains BOTH unsolved and in-progress issues!
+      solved,
+      reReported  
     });
+
   } catch (err) {
     console.error("Get worker profile error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -86,28 +94,50 @@ const update_issue_status = async (req, res) => {
       });
     }
 
+    // 🔥 Capture the previous status BEFORE saving the new one
+    const previousStatus = issue.status;
+
     // Update issue
     issue.status = "solved";
     issue.solvedAt = new Date();
     issue.updatedAt = new Date();
     await issue.save();
 
-    // Update worker arrays: unsolved -> solved
+    // 🔥 Dynamically figure out which count to decrease
+    let decrementField = "inProgressCount"; // default assumption
+    if (previousStatus === "re-reported") {
+      decrementField = "re_reportedCount";
+    } else if (previousStatus === "in progress") {
+      decrementField = "inProgressCount"; // just in case it was never marked in-progress
+    }
+
+    // Build the dynamic increment object
+    const countUpdate = {
+      [decrementField]: -1,
+      solvedCount: 1,
+    };
+
+    // 🔥 1. Update Worker Counts
     await User.findByIdAndUpdate(workerId, {
-      $pull: { unsolvedIssues: issue._id },
-      $push: { solvedIssues: issue._id },
+      $inc: countUpdate,
     });
 
-    // Update admin arrays: inProgress -> solved
+    // 🔥 2. Update Admin Counts
     const admin = await User.findOne({
       role: "admin",
       state: issue.state,
-      districtName: issue.districtName,
+      districtCode: issue.districtCode,
     });
     if (admin) {
       await User.findByIdAndUpdate(admin._id, {
-        $pull: { inProgressIssues: issue._id },
-        $push: { solvedIssues: issue._id },
+        $inc: countUpdate,
+      });
+    }
+
+    // 🔥 3. Update User (Reporter) Counts
+    if (issue.createdBy) {
+      await User.findByIdAndUpdate(issue.createdBy, {
+        $inc: countUpdate,
       });
     }
 

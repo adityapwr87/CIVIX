@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Navbar/Navbar";
 import { getWorkerProfile } from "../../services/api";
-import { FaExclamation, FaCheck, FaSpinner } from "react-icons/fa";
+import { FaExclamation, FaCheck, FaSpinner, FaRedo } from "react-icons/fa"; // 🔥 Added FaRedo
 import "./WorkerDashboard.css";
 
 const WorkerDashboard = () => {
@@ -36,11 +36,12 @@ const WorkerDashboard = () => {
     navigate(`/worker/issue/${issueId}`);
   };
 
-  // 🔥 NEW: Handler to prepare data and navigate to Heatmap
   const handleShowHeatmap = () => {
+    // 🔥 NEW: Included reReported issues in heatmap data
     const allIssues = [
       ...(profile?.unsolved || []),
-      ...(profile?.solved || [])
+      ...(profile?.solved || []),
+      ...(profile?.reReported || []) 
     ];
 
     const heatmapData = allIssues
@@ -146,16 +147,19 @@ const WorkerDashboard = () => {
   // Data Processing
   const unsolved = profile?.unsolved || [];
   const solved = profile?.solved || [];
+  const reReported = profile?.reReported || []; // 🔥 NEW: Extracted reReported issues
   const totalAssigned = profile?.totalAssigned || 0;
 
   // Calculate Percentages
-  const unsolvedPercentage =
-    totalAssigned > 0 ? (unsolved.length / totalAssigned) * 100 : 0;
-  const solvedPercentage =
-    totalAssigned > 0 ? (solved.length / totalAssigned) * 100 : 0;
+  const unsolvedPercentage = totalAssigned > 0 ? (unsolved.length / totalAssigned) * 100 : 0;
+  const solvedPercentage = totalAssigned > 0 ? (solved.length / totalAssigned) * 100 : 0;
+  const reReportedPercentage = totalAssigned > 0 ? (reReported.length / totalAssigned) * 100 : 0; // 🔥 NEW
 
   // Determine current list based on tab
-  const currentIssues = activeTab === "unsolved" ? unsolved : solved;
+  const currentIssues = 
+    activeTab === "unsolved" ? unsolved : 
+    activeTab === "reReported" ? reReported : // 🔥 NEW
+    solved;
 
   return (
     <div className="worker-dashboard-layout">
@@ -171,7 +175,6 @@ const WorkerDashboard = () => {
             </p>
           </div>
           
-          {/* 🔥 NEW: Added Flex container to align badge and button */}
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div className="total-badge">
               Total Assigned: <strong>{totalAssigned}</strong>
@@ -196,17 +199,25 @@ const WorkerDashboard = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="worker-statistics-section">
+        <div className="worker-statistics-section" style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
           <CircularProgress
             percentage={unsolvedPercentage}
-            color="#ef4444" // Red for Unsolved
+            color="#ef4444" 
             label="Pending Issues"
             count={unsolved.length}
             total={totalAssigned}
           />
+          {/* 🔥 NEW: Re-Reported Progress Circle */}
+          <CircularProgress
+            percentage={reReportedPercentage}
+            color="#8b5cf6" 
+            label="Re-Reported"
+            count={reReported.length}
+            total={totalAssigned}
+          />
           <CircularProgress
             percentage={solvedPercentage}
-            color="#10b981" // Green for Solved
+            color="#10b981" 
             label="Issues Solved"
             count={solved.length}
             total={totalAssigned}
@@ -217,19 +228,24 @@ const WorkerDashboard = () => {
         <div className="worker-issues-section">
           <div className="worker-tabs-container">
             <button
-              className={`worker-tab-button ${
-                activeTab === "unsolved" ? "active" : ""
-              }`}
+              className={`worker-tab-button ${activeTab === "unsolved" ? "active" : ""}`}
               onClick={() => setActiveTab("unsolved")}
             >
               <FaExclamation />
               <span>Unsolved ({unsolved.length})</span>
             </button>
 
+            {/* 🔥 NEW: Re-Reported Tab */}
             <button
-              className={`worker-tab-button ${
-                activeTab === "solved" ? "active" : ""
-              }`}
+              className={`worker-tab-button ${activeTab === "reReported" ? "active" : ""}`}
+              onClick={() => setActiveTab("reReported")}
+            >
+              <FaRedo />
+              <span>Re-Reported ({reReported.length})</span>
+            </button>
+
+            <button
+              className={`worker-tab-button ${activeTab === "solved" ? "active" : ""}`}
               onClick={() => setActiveTab("solved")}
             >
               <FaCheck />
@@ -240,7 +256,7 @@ const WorkerDashboard = () => {
           <div className="worker-issues-grid">
             {currentIssues.length === 0 ? (
               <div className="worker-empty-state">
-                <p>No {activeTab} issues found.</p>
+                <p>No {activeTab === "reReported" ? "re-reported" : activeTab} issues found.</p>
               </div>
             ) : (
               currentIssues.map((issue) => (
@@ -252,7 +268,9 @@ const WorkerDashboard = () => {
                   <div className="worker-card-header">
                     <h3>{issue.title}</h3>
                     <span className={`worker-status-badge ${activeTab}`}>
-                      {activeTab === "unsolved" ? "Pending" : "Solved"}
+                      {/* 🔥 NEW: Added condition for Re-Reported badge */}
+                      {activeTab === "unsolved" ? "Pending" : 
+                       activeTab === "reReported" ? "Re-Reported" : "Solved"}
                     </span>
                   </div>
 

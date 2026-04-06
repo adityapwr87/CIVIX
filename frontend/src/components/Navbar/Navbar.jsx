@@ -58,7 +58,10 @@ const Navbar = () => {
             onClick={() => {
               if (user.role === "user") {
                 navigate("/profile");
-              } else navigate("/admin/profile");
+              } else if(user.role==="admin") navigate("/admin/profile");
+              else {
+                navigate("/worker/profile");
+              }
             }}
             className="profile-button"
           >

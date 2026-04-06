@@ -6,16 +6,22 @@ import {
   getUserProfile,
   updateprofilepic,
   updateUserBio,
+  reReportIssue,
 } from "../../services/api";
 import { disconnectSocket } from "../../socket";
 import { toast } from "react-toastify";
-import { FaCamera, FaPen, FaSignOutAlt } from "react-icons/fa"; // Added icons for better UI
+import { FaCamera, FaPen, FaSignOutAlt } from "react-icons/fa";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState("issues");
   const [avatar, setAvatar] = useState(null);
+  const [reReportModal, setReReportModal] = useState({
+    open: false,
+    issueId: null,
+    reason: "",
+  });
 
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const userId = currentUser?._id;
@@ -25,6 +31,7 @@ const Profile = () => {
       try {
         const res = await getUserProfile(userId);
         setProfile(res.data);
+        console.log("Fetched user profile:", res.data);
       } catch (err) {
         console.error("Failed to fetch user profile", err);
       }
@@ -76,6 +83,33 @@ const Profile = () => {
     localStorage.removeItem("token");
     disconnectSocket();
     navigate("/");
+  };
+
+  const openReReportModal = (issueId) => {
+    setReReportModal({ open: true, issueId, reason: "" });
+  };
+
+  const closeReReportModal = () => {
+    setReReportModal({ open: false, issueId: null, reason: "" });
+  };
+
+  const submitReReport = async () => {
+    const { issueId, reason } = reReportModal;
+    if (!reason.trim()) {
+      toast.error("Please provide a reason for re-reporting.");
+      return;
+    }
+    const toastid = toast.info("Submitting re-report...", { autoClose: false });
+    try {
+      await reReportIssue(issueId, reason);
+      toast.dismiss(toastid);
+      toast.success("Re-report submitted successfully!");
+      closeReReportModal();
+    } catch (err) {
+      toast.dismiss(toastid);
+      toast.error("Failed to submit re-report.");
+      console.error(err);
+    }
   };
 
   return (
@@ -150,12 +184,28 @@ const Profile = () => {
               {/* Stats Row */}
               <div className="profile-stats-row">
                 <div className="stat-item">
-                  <strong>{profile.issuesReported || 0}</strong>
-                  <span>Issues</span>
+                  <strong>{profile.unsolvedCount+profile.inProgressCount+profile.solvedCount+profile.re_reportedCount || 0}</strong>
+                  <span>Total Issues</span>
+                </div>
+                <div className="stat-item">
+                  <strong>{profile.unsolvedCount || 0}</strong>
+                  <span>unsolved</span>
+                </div>
+                <div className="stat-item">
+                  <strong>{profile.inProgressCount || 0}</strong>
+                  <span>in progress</span>
+                </div>
+                <div className="stat-item">
+                  <strong>{profile.solvedCount || 0}</strong>
+                  <span>solved</span>
+                </div>
+                <div className="stat-item">
+                  <strong>{profile.re_reportedCount || 0}</strong>
+                  <span>re-reported</span>
                 </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
-                  <strong>{profile.commentsCount || 0}</strong>
+                  <strong>{profile.comments.length || 0}</strong>
                   <span>Comments</span>
                 </div>
                 <div className="stat-divider"></div>
@@ -206,7 +256,12 @@ const Profile = () => {
                             <span>💬 {issue.comments?.length || 0}</span>
                           </div>
                           {issue.status === "solved" && (
-                            <button className="rereport-btn">Re-report</button>
+                            <button 
+                              className="rereport-btn"
+                              onClick={() => openReReportModal(issue._id)}
+                            >
+                              Re-report
+                            </button>
                           )}
                         </div>
                       </div>
@@ -217,21 +272,32 @@ const Profile = () => {
                 </div>
               )}
 
-              {tab === "comments" && (
+{tab === "comments" && (
                 <div className="list-grid">
-                  {profile.comments?.length > 0 ? (
-                    profile.comments.map((c, idx) => (
-                      <div key={idx} className="item-card comment">
-                        <Link
-                          to={`/issue/${c.issue?._id}`}
-                          className="comment-link"
+                  {profile.comments && profile.comments.length > 0 ? (
+                    profile.comments.map((comment) => (
+                      <div key={comment._id} className="item-card comment">
+                        <div className="card-header">
+                          <span className="comment-badge">Comment</span>
+                          <span className="card-date">
+                            {new Date(comment.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <Link 
+                          to={`/issue/${comment.issue?._id || comment.issueId}`} 
+                          className="card-title comment-title"
                         >
-                          On: {c.issue?.title || "Deleted Issue"}
+                          On: {comment.issue?.title || "Issue"}
                         </Link>
-                        <p className="comment-text">"{c.text}"</p>
-                        <span className="card-date">
-                          {new Date(c.createdAt).toLocaleDateString()}
-                        </span>
+                        <p className="comment-text">"{comment.text}"</p>
+                        <div className="card-footer">
+                          <Link 
+                            to={`/issue/${comment.issue?._id || comment.issueId}`}
+                            className="view-issue-link"
+                          >
+                            View Issue →
+                            </Link>
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -239,7 +305,35 @@ const Profile = () => {
                   )}
                 </div>
               )}
+
             </div>
+
+            {/* Re-Report Modal */}
+            {reReportModal.open && (
+              <div className="modal-overlay" role="dialog" aria-modal="true">
+                <div className="modal-card">
+                  <h3>Re-report Issue</h3>
+                  <p>Please provide a reason for re-reporting this issue:</p>
+                  <textarea
+                    value={reReportModal.reason}
+                    onChange={(e) =>
+                      setReReportModal((s) => ({ ...s, reason: e.target.value }))
+                    }
+                    placeholder="Enter your reason here..."
+                    rows={4}
+                    className="rereport-textarea"
+                  />
+                  <div className="modal-actions">
+                    <button className="btn btn-secondary" onClick={closeReReportModal}>
+                      Cancel
+                    </button>
+                    <button className="btn btn-primary" onClick={submitReReport}>
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

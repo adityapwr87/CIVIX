@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaExclamation, FaSpinner, FaCheck } from "react-icons/fa";
+import { FaExclamation, FaSpinner, FaCheck, FaRedo } from "react-icons/fa"; // Added FaRedo
 import axios from "axios";
 import { autoAssignIssues } from "../../services/api";
 import "./AdminDashboard.css";
@@ -11,13 +11,13 @@ const AdminDashboard = () => {
     unsolved: [],
     inProgress: [],
     solved: [],
+    reReported: [], 
     total: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("unsolved");
 
-  // 🔥 NEW STATE FOR DEPARTMENT FILTER
   const [selectedDepartment, setSelectedDepartment] = useState("all");
 
   const navigate = useNavigate();
@@ -35,7 +35,11 @@ const AdminDashboard = () => {
       );
 
       if (response.data.success) {
-        setIssues(response.data.data);
+        // Ensure reReported is initialized even if backend omits it when empty
+        setIssues({
+          ...response.data.data,
+          reReported: response.data.data.reReported || [],
+        });
       } else {
         setError(response.data.message || "Failed to fetch issues");
       }
@@ -47,37 +51,34 @@ const AdminDashboard = () => {
     }
   };
 
-  // Add this right under your handleAutoAssign function
   const handleShowHeatmap = () => {
-    // Combine all issues into one array
+    // Combine all issues into one array, including reReported
     const allIssues = [
       ...issues.unsolved,
       ...issues.inProgress,
       ...issues.solved,
+      ...issues.reReported,
     ];
 
-    // Filter out issues without locations and map to a clean array of objects
     const heatmapData = allIssues
-      .filter((issue) => issue.location) // Ensure the issue actually has location data
+      .filter((issue) => issue.location) 
       .map((issue) => ({
         id: issue._id,
         location: issue.location,
-        status: issue.status, // Optional: useful if you want to color-code pins on the map
-        title: issue.title    // Optional: useful for map popups
+        status: issue.status, 
+        title: issue.title    
       }));
 
-    // Navigate to the heatmap route and pass the data in the state
     navigate("/admin/heatmap", { state: { heatmapData } });
   };
 
   const handleAutoAssign = async () => {
-    if (!window.confirm("Auto-assign unsolved issues to workers?")) return;
+    if (!window.confirm("Auto-assign unsolved and re-reported issues to workers?")) return;
     try {
       setLoading(true);
       setError(null);
       const res = await autoAssignIssues();
       if (res.data && res.data.success) {
-        // Refresh issues after assignment
         await fetchIssues();
         alert(res.data.message || "Auto-assign completed");
       } else {
@@ -203,19 +204,24 @@ const AdminDashboard = () => {
       ? issues.solved
       : issues.solved.filter((i) => i.department === selectedDepartment);
 
+  // Filter re-reported array
+  const filteredReReported =
+    selectedDepartment === "all"
+      ? issues.reReported
+      : issues.reReported.filter((i) => i.department === selectedDepartment);
+
   // Total filtered issues
   const filteredTotal =
-    filteredUnsolved.length + filteredInProgress.length + filteredSolved.length;
+    filteredUnsolved.length + 
+    filteredInProgress.length + 
+    filteredSolved.length + 
+    filteredReReported.length;
 
   // Percentages for progress circles
-  const unsolvedPercentage =
-    filteredTotal > 0 ? (filteredUnsolved.length / filteredTotal) * 100 : 0;
-
-  const inProgressPercentage =
-    filteredTotal > 0 ? (filteredInProgress.length / filteredTotal) * 100 : 0;
-
-  const solvedPercentage =
-    filteredTotal > 0 ? (filteredSolved.length / filteredTotal) * 100 : 0;
+  const unsolvedPercentage = filteredTotal > 0 ? (filteredUnsolved.length / filteredTotal) * 100 : 0;
+  const inProgressPercentage = filteredTotal > 0 ? (filteredInProgress.length / filteredTotal) * 100 : 0;
+  const solvedPercentage = filteredTotal > 0 ? (filteredSolved.length / filteredTotal) * 100 : 0;
+  const reReportedPercentage = filteredTotal > 0 ? (filteredReReported.length / filteredTotal) * 100 : 0;
 
   // Set issues shown in the list
   const currentIssues =
@@ -223,7 +229,9 @@ const AdminDashboard = () => {
       ? filteredUnsolved
       : activeTab === "inProgress"
       ? filteredInProgress
-      : filteredSolved;
+      : activeTab === "solved"
+      ? filteredSolved
+      : filteredReReported;
 
   return (
     <div>
@@ -235,7 +243,6 @@ const AdminDashboard = () => {
             Total Issues: <strong>{filteredTotal}</strong>
           </p>
 
-          {/* 🔥 DEPARTMENT FILTER DROPDOWN */}
           <div className="filter-container">
             <label className="filter-label">Filter By Department:</label>
             <select
@@ -250,20 +257,15 @@ const AdminDashboard = () => {
               <option value="Waste Management">Waste Management</option>
               <option value="Drainage & Sewerage">Drainage & Sewerage</option>
               <option value="Streetlights">Streetlights</option>
-              <option value="Public Health & Sanitation">
-                Public Health & Sanitation
-              </option>
+              <option value="Public Health & Sanitation">Public Health & Sanitation</option>
               <option value="Parks & Trees">Parks & Trees</option>
               <option value="Pollution Control">Pollution Control</option>
               <option value="Public Safety">Public Safety</option>
-              <option value="Building & Construction">
-                Building & Construction
-              </option>
+              <option value="Building & Construction">Building & Construction</option>
               <option value="Others">Others</option>
             </select>
           </div>
-          {/* Auto assign button */}
-          {/* Action Buttons */}
+
           <div style={{ marginLeft: 16, display: "flex", gap: "10px" }}>
             <button className="auth-button" onClick={handleAutoAssign}>
               Auto Assign
@@ -271,7 +273,7 @@ const AdminDashboard = () => {
             <button 
               className="auth-button" 
               onClick={handleShowHeatmap}
-              style={{ backgroundColor: "#3b82f6" }} // Optional: gives it a distinct blue color
+              style={{ backgroundColor: "#3b82f6" }} 
             >
               Show Heatmap
             </button>
@@ -279,12 +281,19 @@ const AdminDashboard = () => {
         </div>
 
         {/* STATISTICS WITH FILTERING */}
-        <div className="statistics-section">
+        <div className="statistics-section" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
           <CircularProgress
             percentage={unsolvedPercentage}
             color="#ef4444"
             label="Unsolved"
             count={filteredUnsolved.length}
+            total={filteredTotal}
+          />
+          <CircularProgress
+            percentage={reReportedPercentage}
+            color="#8b5cf6" // Purple for re-reported
+            label="Re-Reported"
+            count={filteredReReported.length}
             total={filteredTotal}
           />
           <CircularProgress
@@ -307,9 +316,7 @@ const AdminDashboard = () => {
         <div className="issues-section">
           <div className="tabs-container">
             <button
-              className={`tab-button ${
-                activeTab === "unsolved" ? "active" : ""
-              }`}
+              className={`tab-button ${activeTab === "unsolved" ? "active" : ""}`}
               onClick={() => setActiveTab("unsolved")}
             >
               <FaExclamation />
@@ -317,9 +324,15 @@ const AdminDashboard = () => {
             </button>
 
             <button
-              className={`tab-button ${
-                activeTab === "inProgress" ? "active" : ""
-              }`}
+              className={`tab-button ${activeTab === "reReported" ? "active" : ""}`}
+              onClick={() => setActiveTab("reReported")}
+            >
+              <FaRedo />
+              <span>Re-Reported ({filteredReReported.length})</span>
+            </button>
+
+            <button
+              className={`tab-button ${activeTab === "inProgress" ? "active" : ""}`}
               onClick={() => setActiveTab("inProgress")}
             >
               <FaSpinner />
@@ -352,7 +365,8 @@ const AdminDashboard = () => {
                     <div className="issue-header">
                       <h3>{issue.title}</h3>
                       <span className={`status-badge ${activeTab}`}>
-                        {activeTab === "inProgress" ? "In Progress" : activeTab}
+                        {activeTab === "inProgress" ? "In Progress" : 
+                         activeTab === "reReported" ? "Re-Reported" : activeTab}
                       </span>
                     </div>
 

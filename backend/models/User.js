@@ -48,33 +48,22 @@ const userSchema = new mongoose.Schema(
       maxlength: 300, // Limit to 300 chars if desired
     },
 
-    reports: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Issue",
-      },
-    ],
-
-    unsolvedIssues: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Issue",
-      },
-    ],
-
-    inProgressIssues: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Issue",
-      },
-    ],
-
-    solvedIssues: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Issue",
-      },
-    ],
+    unsolvedCount: {
+        type: Number,
+        default: 0,
+    },
+    inProgressCount: {
+     type: Number,
+     default: 0,
+    },
+    solvedCount: {
+    type: Number,
+    default: 0,
+    },
+    re_reportedCount: {
+    type: Number,
+    default: 0,
+    },
 
     comments: [
       {

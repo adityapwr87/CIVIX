@@ -27,6 +27,9 @@ const issueSchema = new mongoose.Schema(
     assignedWorker: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     assignedAt: Date,
     solvedAt: Date,
+    reReportReason: String,
+    reReportedAt: Date,
+    reReportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

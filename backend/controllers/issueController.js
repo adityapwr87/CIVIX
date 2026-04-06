@@ -5,10 +5,9 @@ const axios = require("axios");
 
 const createIssue = async (req, res) => {
   try {
-    const { title, description, coordinates, address, state, districtName } =
+    const { title, description, coordinates, address, state, districtName, department } =
       req.body;
 
-    // Basic validation
     if (!title || !description || !coordinates || !state || !districtName) {
       return res.status(400).json({ message: "All fields are required." });
     }
@@ -34,6 +33,7 @@ const createIssue = async (req, res) => {
       state: state,
       districtName,
     });
+    
     if (!admin) {
       return res.status(404).json({
         message: `No admin found for ${districtName}, ${state}. Cannot create issue.`,
@@ -47,23 +47,6 @@ const createIssue = async (req, res) => {
       imageUrls = await Promise.all(uploadPromises);
     }
 
-    // Create new issue
-    let predictedDepartment = "Others"; // fallback
-
-    try {
-      const mlResponse = await axios.post(
-        "https://issue-classifier.onrender.com/predict",
-        {
-          description: description,
-        }
-      );
-
-      predictedDepartment = mlResponse.data.predicted_department;
-      console.log("Predicted Department:", predictedDepartment);
-    } catch (mlError) {
-      console.error("ML API Error:", mlError.message);
-      // do not block issue creation if ML fails
-    }
     const newIssue = new Issue({
       title,
       description,
@@ -75,25 +58,28 @@ const createIssue = async (req, res) => {
       },
       state,
       districtName,
+      // You should also save the admin's districtCode to the issue so it matches the admin dashboard filters!
+      districtCode: admin.districtCode, 
       createdBy: user._id,
-      department: predictedDepartment, // ✅ CORRECT FIELD NAME
+      department: department || "Others",
+      status: "unsolved" // explicitly defining it for clarity
     });
 
-    console.log("Saving Issue:", {
-      title,
-      department: predictedDepartment,
-    });
-
+    // Save the new issue to the database
     await newIssue.save();
 
-    // Update references
-    await Promise.all([
-      User.findByIdAndUpdate(user._id, { $push: { reports: newIssue._id } }),
-      User.findByIdAndUpdate(admin._id, {
-        $push: { unsolvedIssues: newIssue._id },
-      }),
-    ]);
+    // 🔥 Update Counts for User and Admin
+    // Increase the unsolved count by 1 for the reporter
+    await User.findByIdAndUpdate(user._id, {
+      $inc: { unsolvedCount: 1 }
+    });
 
+    // Increase the unsolved count by 1 for the district admin
+    await User.findByIdAndUpdate(admin._id, {
+      $inc: { unsolvedCount: 1 }
+    });
+
+    // Populate for the frontend response
     await newIssue.populate("createdBy", "username email");
 
     res.status(201).json({

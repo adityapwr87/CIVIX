@@ -72,6 +72,7 @@ const Report = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    department:"",
     images: [],
     coordinates: [],
     address: "",
@@ -152,7 +153,8 @@ const handleSubmit = async (e) => {
       !formData.description ||
       !formData.coordinates ||
       !formData.state ||
-      !formData.districtName
+      !formData.districtName||
+      !formData.department
     ) {
       throw new Error("Please fill all required fields");
     }
@@ -165,6 +167,7 @@ const handleSubmit = async (e) => {
     data.append("address", formData.address);
     data.append("state", formData.state);
     data.append("districtName", formData.districtName);
+    data.append("department", formData.department);
     imageFiles.forEach((file) => data.append("images", file));
 
     // API call
@@ -240,6 +243,30 @@ const handleSubmit = async (e) => {
                   rows="4"
                   required
                 />
+              </div>
+              <div className="report-input-group">
+                <label htmlFor="department">Department *</label>
+                <select
+                  id="department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="" disabled>Select a department</option>
+                  <option value="Electricity">Electricity</option>
+                  <option value="Roads & Transport">Roads & Transport</option>
+                  <option value="Public Health & Sanitation">Public Health & Sanitation</option>
+                  <option value="Waste Management">Waste Management</option>
+                  <option value="Drainage & Sewerage">Drainage & Sewerage</option>
+                  <option value="Pollution Control">Pollution Control</option>
+                  <option value="Water Supply">Water Supply</option>
+                  <option value="Parks & Trees">Parks & Trees</option>
+                  <option value="Public Safety">Public Safety</option>
+                  <option value="Streetlights">Streetlights</option>
+                  <option value="Building & Construction">Building & Construction</option>
+                  <option value="Others">Others</option>
+                </select>
               </div>
 
               <div className="report-input-group">

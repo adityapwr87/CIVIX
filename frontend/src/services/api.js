@@ -65,6 +65,9 @@ export const updateprofilepic = (file) => {
 export const updateUserBio = (bio) => {
   return API.patch("/users/updateBio", { bio });
 };
+export const reReportIssue = (issueId, reason) => {
+  return API.patch(`/users/reReport/${issueId}`, { reason });
+}
 
 export const getUnseenNotifications = () => API.get("/notifications/unseen");
 export const markNotificationRead = (id) =>
@@ -85,5 +88,5 @@ export default {
   updateprofilepic,
   updateUserBio,
   getUnseenNotifications,
-  autoAssignIssues,
+  autoAssignIssues
 };
