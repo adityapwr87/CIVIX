@@ -58,7 +58,7 @@ const Navbar = () => {
             onClick={() => {
               if (user.role === "user") {
                 navigate("/profile");
-              } else if(user.role==="admin") navigate("/admin/profile");
+              } else if(user.role==="admin"||user.role==="superadmin") navigate("/admin/profile");
               else {
                 navigate("/worker/profile");
               }

@@ -12,7 +12,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaEdit,
-  FaExclamationCircle
+  FaExclamationCircle,
 } from "react-icons/fa";
 import Navbar from "../Navbar/Navbar";
 
@@ -24,11 +24,11 @@ const WorkerIssueDetails = () => {
   const [loading, setLoading] = useState(true);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  const [showStatusModal, setShowStatusModal] = useState(false); 
+
+  const [showStatusModal, setShowStatusModal] = useState(false);
   // 🔥 NEW: Track if the status update is currently in progress
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false); 
-  
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   const userId = JSON.parse(localStorage.getItem("user"))._id;
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const WorkerIssueDetails = () => {
       } catch (err) {
         console.error(
           "Failed to load issue:",
-          err.response?.data || err.message
+          err.response?.data || err.message,
         );
       } finally {
         setLoading(false);
@@ -70,14 +70,14 @@ const WorkerIssueDetails = () => {
     } catch (err) {
       console.error(
         "Error submitting comment:",
-        err.response?.data?.message || err.message
+        err.response?.data?.message || err.message,
       );
     }
   };
 
   const handleUpvote = async () => {
     try {
-      const res = await upvoteIssue(id); 
+      const res = await upvoteIssue(id);
 
       if (res.status === 200) {
         setIssue((prev) => ({
@@ -95,13 +95,13 @@ const WorkerIssueDetails = () => {
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? issue.images.length - 1 : prev - 1
+      prev === 0 ? issue.images.length - 1 : prev - 1,
     );
   };
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === issue.images.length - 1 ? 0 : prev + 1
+      prev === issue.images.length - 1 ? 0 : prev + 1,
     );
   };
 
@@ -119,12 +119,12 @@ const WorkerIssueDetails = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: newStatus }),
-        }
+        },
       );
 
       if (res.ok) {
         setIssue((prev) => ({ ...prev, status: newStatus }));
-        setShowStatusModal(false); 
+        setShowStatusModal(false);
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -148,9 +148,21 @@ const WorkerIssueDetails = () => {
     return (
       <>
         <Navbar />
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60vh",
+          }}
+        >
           <div className="spinner"></div>
-          <p style={{ marginTop: "16px", color: "#6b7280", fontSize: "1.1rem" }}>Loading issue details...</p>
+          <p
+            style={{ marginTop: "16px", color: "#6b7280", fontSize: "1.1rem" }}
+          >
+            Loading issue details...
+          </p>
         </div>
       </>
     );
@@ -160,7 +172,14 @@ const WorkerIssueDetails = () => {
     return (
       <>
         <Navbar />
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60vh",
+          }}
+        >
           <h2 style={{ color: "#374151" }}>Issue not found</h2>
         </div>
       </>
@@ -171,51 +190,77 @@ const WorkerIssueDetails = () => {
     <>
       <Navbar />
       <div className="issue-details-container">
-        
         {/* Status Change Modal Overlay */}
         {showStatusModal && (
-          <div style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999,
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}>
-            <div style={{
-              backgroundColor: "#fff", padding: "24px", borderRadius: "12px",
-              width: "90%", maxWidth: "400px", textAlign: "center",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
-            }}>
-              <h3 style={{ marginTop: 0, marginBottom: "8px" }}>Update Issue Status</h3>
-              <p style={{ color: "#6b7280", marginBottom: "20px" }}>Select the current status for this issue.</p>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.6)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#fff",
+                padding: "24px",
+                borderRadius: "12px",
+                width: "90%",
+                maxWidth: "400px",
+                textAlign: "center",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+              }}
+            >
+              <h3 style={{ marginTop: 0, marginBottom: "8px" }}>
+                Update Issue Status
+              </h3>
+              <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+                Select the current status for this issue.
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
                 {/* 🔥 CHANGED: Button styling, text, and disabled property based on isUpdatingStatus */}
-                <button 
+                <button
                   onClick={() => handleStatusChange("solved")}
                   disabled={isUpdatingStatus}
-                  style={{ 
-                    padding: "12px", 
+                  style={{
+                    padding: "12px",
                     backgroundColor: isUpdatingStatus ? "#9ca3af" : "#10b981", // Gray out if loading
-                    color: "#fff", 
-                    border: "none", 
-                    borderRadius: "6px", 
-                    cursor: isUpdatingStatus ? "not-allowed" : "pointer", 
-                    fontWeight: "bold" 
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: isUpdatingStatus ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
                   }}
                 >
-                  {isUpdatingStatus ? "Updating issue status..." : "Mark as Solved"}
+                  {isUpdatingStatus
+                    ? "Updating issue status..."
+                    : "Mark as Solved"}
                 </button>
-                <button 
+                <button
                   onClick={() => setShowStatusModal(false)}
                   disabled={isUpdatingStatus}
-                  style={{ 
-                    padding: "12px", 
-                    backgroundColor: "#e5e7eb", 
-                    color: "#374151", 
-                    border: "none", 
-                    borderRadius: "6px", 
-                    cursor: isUpdatingStatus ? "not-allowed" : "pointer", 
-                    fontWeight: "bold", 
-                    marginTop: "10px" 
+                  style={{
+                    padding: "12px",
+                    backgroundColor: "#e5e7eb",
+                    color: "#374151",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: isUpdatingStatus ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
+                    marginTop: "10px",
                   }}
                 >
                   Cancel
@@ -234,13 +279,15 @@ const WorkerIssueDetails = () => {
               <span className="meta-item department-tag">
                 🏷️ {issue.department}
               </span>
-              
-              <button
-                className="change-status-btn"
-                onClick={() => setShowStatusModal(true)}
-              >
-                <FaEdit /> Change Status
-              </button>
+
+              {issue.status !== "solved" && (
+                <button
+                  className="change-status-btn"
+                  onClick={() => setShowStatusModal(true)}
+                >
+                  <FaEdit /> Change Status
+                </button>
+              )}
 
               <button
                 className="view-location-btn"
@@ -259,20 +306,31 @@ const WorkerIssueDetails = () => {
           <h1 className="issue-title">{issue.title}</h1>
 
           {/* Re-Report Reason Box */}
-          {(issue.status === "re-reported") && (
-            <div style={{
-              backgroundColor: "#fef2f2",
-              borderLeft: "5px solid #ef4444",
-              padding: "16px",
-              marginBottom: "20px",
-              borderRadius: "4px"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", color: "#b91c1c", fontWeight: "bold", marginBottom: "8px" }}>
+          {issue.status === "re-reported" && (
+            <div
+              style={{
+                backgroundColor: "#fef2f2",
+                borderLeft: "5px solid #ef4444",
+                padding: "16px",
+                marginBottom: "20px",
+                borderRadius: "4px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "#b91c1c",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                }}
+              >
                 <FaExclamationCircle style={{ marginRight: "8px" }} />
                 This issue was Re-Reported
               </div>
               <p style={{ margin: 0, color: "#7f1d1d", fontSize: "0.95rem" }}>
-                <strong>Reason: </strong> {issue.reReportReason || "No reason provided by the user."}
+                <strong>Reason: </strong>{" "}
+                {issue.reReportReason || "No reason provided by the user."}
               </p>
             </div>
           )}

@@ -2,33 +2,34 @@ const User = require("../models/User");
 const Issue = require("../models/Issue");
 const uploadtos3 = require("../utils/s3Upload"); // Assuming this is a utility function to handle S3 uploads
 // Make sure you have imported the Issue model at the top of your controller file
-// const Issue = require("../models/Issue"); 
+// const Issue = require("../models/Issue");
 
 const getUserProfile = async (req, res) => {
   try {
     const userId = req.params.userId;
 
     // 1. Fetch user WITHOUT selecting the 'reports' array to save memory
-    const user = await User.findById(userId)
-      .select(
-        "_id username email createdAt comments bio profileImage unsolvedIssues inProgressIssues solvedIssues state districtName unsolvedCount inProgressCount solvedCount re_reportedCount"
-      );
+    const user = await User.findById(userId).select(
+      "role _id username email createdAt comments bio profileImage unsolvedIssues inProgressIssues solvedIssues state districtName unsolvedCount inProgressCount solvedCount re_reportedCount department",
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // 2. Query the Issue collection directly to get all issues reported by this user
-    // (Assuming your Issue schema uses 'createdBy' to store the user's ID)
-    const reportedIssues = await Issue.find({ createdBy: userId }).sort({ createdAt: -1 });
+    // 2. Query reported issues only for citizen users
+    let reportedIssues = [];
+    if (user.role === "user") {
+      reportedIssues = await Issue.find({ createdBy: userId }).sort({
+        createdAt: -1,
+      });
+    }
 
     // 3. Calculate total upvotes from the directly queried issues
     const totalUpvotes = reportedIssues.reduce(
       (sum, issue) => sum + (issue.upvotes?.length || 0),
-      0
+      0,
     );
-
-    
 
     // 5. Send the response
     res.json({
@@ -39,17 +40,17 @@ const getUserProfile = async (req, res) => {
       issuesReported: reportedIssues.length,
       totalUpvotes: totalUpvotes,
       reportedIssues: reportedIssues,
-      comments:user.comments, // 🔥 Sending the directly queried issues here
+      comments: user.comments, // 🔥 Sending the directly queried issues here
       bio: user.bio || "",
       profileImage: user.profileImage,
       unsolvedCount: user.unsolvedCount || 0,
-      inProgressCount: user.inProgressCount||0,
+      inProgressCount: user.inProgressCount || 0,
       solvedCount: user.solvedCount || 0,
       re_reportedCount: user.re_reportedCount || 0,
       state: user.state || null,
       districtName: user.districtName || null,
+      department: user.department || null,
     });
-
   } catch (err) {
     console.error("Error in getUserProfile:", err);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -90,15 +91,16 @@ const updateUserBio = async (req, res) => {
   }
 };
 
-
 const reReportIssue = async (req, res) => {
   try {
-    const { issueId } = req.params; 
+    const { issueId } = req.params;
     const { reason } = req.body;
-    const userId = req.user._id; 
+    const userId = req.user._id;
 
     if (!reason) {
-      return res.status(400).json({ message: "A reason is required to re-report an issue." });
+      return res
+        .status(400)
+        .json({ message: "A reason is required to re-report an issue." });
     }
 
     const issue = await Issue.findById(issueId);
@@ -108,8 +110,10 @@ const reReportIssue = async (req, res) => {
     }
 
     if (issue.status !== "solved") {
-      return res.status(400).json({ 
-        message: "Only solved issues can be re-reported. Current status is: " + issue.status 
+      return res.status(400).json({
+        message:
+          "Only solved issues can be re-reported. Current status is: " +
+          issue.status,
       });
     }
 
@@ -117,19 +121,19 @@ const reReportIssue = async (req, res) => {
     const updatedIssue = await Issue.findByIdAndUpdate(
       issueId,
       {
-        status: "re-reported", 
+        status: "re-reported",
         reReportReason: reason,
         reReportedAt: new Date(),
-        reReportedBy: userId
+        reReportedBy: userId,
       },
-      { new: true } 
+      { new: true },
     );
 
     // 🔥 1. Update the User (Reporter) Counts
     // Decrease solved count, increase re-reported count
     if (issue.createdBy) {
       await User.findByIdAndUpdate(issue.createdBy, {
-        $inc: { solvedCount: -1, re_reportedCount: 1 }
+        $inc: { solvedCount: -1, re_reportedCount: 1 },
       });
     }
 
@@ -137,7 +141,7 @@ const reReportIssue = async (req, res) => {
     // If a worker was assigned, update their metrics
     if (issue.assignedWorker) {
       await User.findByIdAndUpdate(issue.assignedWorker, {
-        $inc: { solvedCount: -1, re_reportedCount: 1 }
+        $inc: { solvedCount: -1, re_reportedCount: 1 },
       });
     }
 
@@ -146,26 +150,32 @@ const reReportIssue = async (req, res) => {
     const admin = await User.findOne({
       role: "admin",
       state: issue.state,
-      districtCode: issue.districtCode
+      districtCode: issue.districtCode,
     });
 
     if (admin) {
       await User.findByIdAndUpdate(admin._id, {
-        $inc: { solvedCount: -1, re_reportedCount: 1 }
+        $inc: { solvedCount: -1, re_reportedCount: 1 },
       });
     }
 
     return res.status(200).json({
       message: "Issue successfully re-reported.",
-      issue: updatedIssue
+      issue: updatedIssue,
     });
-
   } catch (error) {
     console.error("Re-report issue error:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
 module.exports = { reReportIssue };
 
-module.exports = { getUserProfile, updateProfilePic, updateUserBio, reReportIssue };
+module.exports = {
+  getUserProfile,
+  updateProfilePic,
+  updateUserBio,
+  reReportIssue,
+};

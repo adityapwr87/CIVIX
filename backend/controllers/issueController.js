@@ -5,8 +5,15 @@ const axios = require("axios");
 
 const createIssue = async (req, res) => {
   try {
-    const { title, description, coordinates, address, state, districtName, department } =
-      req.body;
+    const {
+      title,
+      description,
+      coordinates,
+      address,
+      state,
+      districtName,
+      department,
+    } = req.body;
 
     if (!title || !description || !coordinates || !state || !districtName) {
       return res.status(400).json({ message: "All fields are required." });
@@ -32,8 +39,9 @@ const createIssue = async (req, res) => {
       role: "admin",
       state: state,
       districtName,
+      department: department || "Others",
     });
-    
+
     if (!admin) {
       return res.status(404).json({
         message: `No admin found for ${districtName}, ${state}. Cannot create issue.`,
@@ -59,10 +67,10 @@ const createIssue = async (req, res) => {
       state,
       districtName,
       // You should also save the admin's districtCode to the issue so it matches the admin dashboard filters!
-      districtCode: admin.districtCode, 
+      districtCode: admin.districtCode,
       createdBy: user._id,
       department: department || "Others",
-      status: "unsolved" // explicitly defining it for clarity
+      status: "unsolved", // explicitly defining it for clarity
     });
 
     // Save the new issue to the database
@@ -71,12 +79,7 @@ const createIssue = async (req, res) => {
     // 🔥 Update Counts for User and Admin
     // Increase the unsolved count by 1 for the reporter
     await User.findByIdAndUpdate(user._id, {
-      $inc: { unsolvedCount: 1 }
-    });
-
-    // Increase the unsolved count by 1 for the district admin
-    await User.findByIdAndUpdate(admin._id, {
-      $inc: { unsolvedCount: 1 }
+      $inc: { unsolvedCount: 1 },
     });
 
     // Populate for the frontend response
@@ -98,9 +101,16 @@ const createIssue = async (req, res) => {
 // Get all issues for public display
 const getAllIssues = async (req, res) => {
   try {
-    const issues = await Issue.find()
+    const { state, districtName } = req.query;
+
+    const issueQuery = {};
+    if (state) issueQuery.state = state;
+    if (districtName) issueQuery.districtName = districtName;
+
+    const issues = await Issue.find(issueQuery)
       .populate("createdBy", "username")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(50);
 
     res.status(200).json(issues);
   } catch (error) {

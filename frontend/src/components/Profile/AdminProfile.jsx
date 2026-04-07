@@ -137,7 +137,7 @@ const AdminProfile = () => {
                   <div className="admin-name-row">
                     <h2>
                       {profile.username}{" "}
-                      <span className="admin-role-badge">Admin</span>
+                      <span className="admin-role-badge">Admin - {profile.department}</span>
                     </h2>
                     <button className="admin-logout-btn" onClick={handleLogout}>
                       <FaSignOutAlt /> Logout
@@ -167,29 +167,6 @@ const AdminProfile = () => {
                       {new Date(profile.joined).toLocaleDateString()}
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Stats Overview */}
-              <div className="admin-stats-row">
-                <div className="admin-stat-item">
-                  <strong>{totalCount}</strong>
-                  <span>Total Issues</span>
-                </div>
-                <div className="admin-stat-divider"></div>
-                <div className="admin-stat-item text-green">
-                  <strong>{profile.solvedCount || 0}</strong>
-                  <span>Solved</span>
-                </div>
-                <div className="admin-stat-divider"></div>
-                <div className="admin-stat-item text-orange">
-                  <strong>{profile.inProgressCount || 0}</strong>
-                  <span>In Progress</span>
-                </div>
-                <div className="admin-stat-divider"></div>
-                <div className="admin-stat-item text-red">
-                  <strong>{profile.unsolvedCount || 0}</strong>
-                  <span>Unsolved</span>
                 </div>
               </div>
             </div>

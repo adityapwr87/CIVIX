@@ -9,23 +9,31 @@ const getDistrictIssues = async (req, res) => {
     const admin = await User.findById(adminId);
 
     if (!admin || (admin.role !== "admin" && admin.role !== "superadmin")) {
-      return res.status(403).json({ success: false, message: "Access denied." });
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied." });
     }
 
-    // 🔥 UPDATED: Fetch ALL issues matching BOTH the admin's state and districtCode
-    const allIssues = await Issue.find({ 
-      state: admin.state, 
-      districtCode: admin.districtCode 
-    })
+    // Fetch issues for the district; restrict by department for regular admins only
+    const issueQuery = {
+      state: admin.state,
+      districtName: admin.districtName,
+    };
+
+    if (admin.role === "admin") {
+      issueQuery.department = admin.department;
+    }
+
+    const allIssues = await Issue.find(issueQuery)
       .populate("createdBy", "username email")
       .sort({ createdAt: -1 });
 
     // Group them manually in the controller
     const groupedIssues = {
-      unsolved: allIssues.filter(issue => issue.status === "unsolved"),
-      inProgress: allIssues.filter(issue => issue.status === "in progress"), 
-      solved: allIssues.filter(issue => issue.status === "solved"),
-      reReported: allIssues.filter(issue => issue.status === "re-reported"),
+      unsolved: allIssues.filter((issue) => issue.status === "unsolved"),
+      inProgress: allIssues.filter((issue) => issue.status === "in progress"),
+      solved: allIssues.filter((issue) => issue.status === "solved"),
+      reReported: allIssues.filter((issue) => issue.status === "re-reported"),
       total: allIssues.length,
     };
 
@@ -54,7 +62,7 @@ const autoAssignIssues = async (req, res) => {
     // 🔥 1. Fetch unsolved issues directly from the Issue collection
     const unsolvedIssues = await Issue.find({
       state: admin.state,
-      districtCode: admin.districtCode,
+      districtName: admin.districtName,
       status: "unsolved",
     }).populate("createdBy", "username email");
 
@@ -127,15 +135,15 @@ const autoAssignIssues = async (req, res) => {
             status: "in progress",
             updatedAt: new Date(),
           },
-          { new: true }
+          { new: true },
         );
 
         // 🔥 3. Update worker counts instead of arrays
         // Increment totalAssigned and inProgressCount
         await User.findByIdAndUpdate(chosen._id, {
-          $inc: { 
-            totalAssigned: 1, 
-            inProgressCount: 1 
+          $inc: {
+            totalAssigned: 1,
+            inProgressCount: 1,
           },
         });
 
@@ -184,16 +192,6 @@ const autoAssignIssues = async (req, res) => {
       }
     }
 
-    // 🔥 4. Update Admin Counts
-    // Decrease unsolvedCount, increase inProgressCount by the total number of issues assigned
-    if (assignedCount > 0) {
-      await User.findByIdAndUpdate(admin._id, {
-        $inc: {
-          unsolvedCount: -assignedCount,
-          inProgressCount: assignedCount,
-        },
-      });
-    }
 
     res
       .status(200)
@@ -290,21 +288,13 @@ const assignIssueToWorker = async (req, res) => {
       { new: true },
     );
 
-    // 🔥 4. Update Admin Counts
-    // Decrease unsolvedCount by 1, increase inProgressCount by 1
-    await User.findByIdAndUpdate(adminId, {
-      $inc: { 
-        unsolvedCount: -1, 
-        inProgressCount: 1 
-      },
-    });
 
     // 🔥 5. Update Worker Counts
     // Increase their total assigned count and in-progress count
     await User.findByIdAndUpdate(workerId, {
-      $inc: { 
-        totalAssigned: 1, 
-        inProgressCount: 1 
+      $inc: {
+        totalAssigned: 1,
+        inProgressCount: 1,
       },
     });
 
@@ -312,9 +302,9 @@ const assignIssueToWorker = async (req, res) => {
     // Decrease unsolvedCount by 1, increase inProgressCount by 1
     if (issue.createdBy) {
       await User.findByIdAndUpdate(issue.createdBy, {
-        $inc: { 
-          unsolvedCount: -1, 
-          inProgressCount: 1 
+        $inc: {
+          unsolvedCount: -1,
+          inProgressCount: 1,
         },
       });
     }

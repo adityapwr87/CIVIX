@@ -7,11 +7,16 @@ import "./AdminDashboard.css";
 import Navbar from "../Navbar/Navbar";
 
 const AdminDashboard = () => {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "null") || {};
+  console.log("Current User in AdminDashboard:", currentUser);
+  const isSuperAdmin = currentUser.role === "superadmin";
+  const isAdmin = currentUser.role === "admin";
+
   const [issues, setIssues] = useState({
     unsolved: [],
     inProgress: [],
     solved: [],
-    reReported: [], 
+    reReported: [],
     total: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -31,7 +36,7 @@ const AdminDashboard = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/admin/district/issues`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -61,19 +66,22 @@ const AdminDashboard = () => {
     ];
 
     const heatmapData = allIssues
-      .filter((issue) => issue.location) 
+      .filter((issue) => issue.location)
       .map((issue) => ({
         id: issue._id,
         location: issue.location,
-        status: issue.status, 
-        title: issue.title    
+        status: issue.status,
+        title: issue.title,
       }));
 
     navigate("/admin/heatmap", { state: { heatmapData } });
   };
 
   const handleAutoAssign = async () => {
-    if (!window.confirm("Auto-assign unsolved and re-reported issues to workers?")) return;
+    if (
+      !window.confirm("Auto-assign unsolved and re-reported issues to workers?")
+    )
+      return;
     try {
       setLoading(true);
       setError(null);
@@ -87,7 +95,7 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error("Auto-assign error:", err);
       setError(
-        err.response?.data?.message || err.message || "Auto-assign failed"
+        err.response?.data?.message || err.message || "Auto-assign failed",
       );
     } finally {
       setLoading(false);
@@ -189,49 +197,57 @@ const AdminDashboard = () => {
   // 🔥 FILTERING RULES BASED ON SELECTED DEPARTMENT
   // ----------------------------------------------------------
 
-  const filteredUnsolved =
-    selectedDepartment === "all"
+  const filteredUnsolved = isSuperAdmin
+    ? selectedDepartment === "all"
       ? issues.unsolved
-      : issues.unsolved.filter((i) => i.department === selectedDepartment);
+      : issues.unsolved.filter((i) => i.department === selectedDepartment)
+    : issues.unsolved;
 
-  const filteredInProgress =
-    selectedDepartment === "all"
+  const filteredInProgress = isSuperAdmin
+    ? selectedDepartment === "all"
       ? issues.inProgress
-      : issues.inProgress.filter((i) => i.department === selectedDepartment);
+      : issues.inProgress.filter((i) => i.department === selectedDepartment)
+    : issues.inProgress;
 
-  const filteredSolved =
-    selectedDepartment === "all"
+  const filteredSolved = isSuperAdmin
+    ? selectedDepartment === "all"
       ? issues.solved
-      : issues.solved.filter((i) => i.department === selectedDepartment);
+      : issues.solved.filter((i) => i.department === selectedDepartment)
+    : issues.solved;
 
   // Filter re-reported array
-  const filteredReReported =
-    selectedDepartment === "all"
+  const filteredReReported = isSuperAdmin
+    ? selectedDepartment === "all"
       ? issues.reReported
-      : issues.reReported.filter((i) => i.department === selectedDepartment);
+      : issues.reReported.filter((i) => i.department === selectedDepartment)
+    : issues.reReported;
 
   // Total filtered issues
   const filteredTotal =
-    filteredUnsolved.length + 
-    filteredInProgress.length + 
-    filteredSolved.length + 
+    filteredUnsolved.length +
+    filteredInProgress.length +
+    filteredSolved.length +
     filteredReReported.length;
 
   // Percentages for progress circles
-  const unsolvedPercentage = filteredTotal > 0 ? (filteredUnsolved.length / filteredTotal) * 100 : 0;
-  const inProgressPercentage = filteredTotal > 0 ? (filteredInProgress.length / filteredTotal) * 100 : 0;
-  const solvedPercentage = filteredTotal > 0 ? (filteredSolved.length / filteredTotal) * 100 : 0;
-  const reReportedPercentage = filteredTotal > 0 ? (filteredReReported.length / filteredTotal) * 100 : 0;
+  const unsolvedPercentage =
+    filteredTotal > 0 ? (filteredUnsolved.length / filteredTotal) * 100 : 0;
+  const inProgressPercentage =
+    filteredTotal > 0 ? (filteredInProgress.length / filteredTotal) * 100 : 0;
+  const solvedPercentage =
+    filteredTotal > 0 ? (filteredSolved.length / filteredTotal) * 100 : 0;
+  const reReportedPercentage =
+    filteredTotal > 0 ? (filteredReReported.length / filteredTotal) * 100 : 0;
 
   // Set issues shown in the list
   const currentIssues =
     activeTab === "unsolved"
       ? filteredUnsolved
       : activeTab === "inProgress"
-      ? filteredInProgress
-      : activeTab === "solved"
-      ? filteredSolved
-      : filteredReReported;
+        ? filteredInProgress
+        : activeTab === "solved"
+          ? filteredSolved
+          : filteredReReported;
 
   return (
     <div>
@@ -243,37 +259,53 @@ const AdminDashboard = () => {
             Total Issues: <strong>{filteredTotal}</strong>
           </p>
 
-          <div className="filter-container">
-            <label className="filter-label">Filter By Department:</label>
-            <select
-              className="department-filter"
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-            >
-              <option value="all">All Departments</option>
-              <option value="Roads & Transport">Roads & Transport</option>
-              <option value="Water Supply">Water Supply</option>
-              <option value="Electricity">Electricity</option>
-              <option value="Waste Management">Waste Management</option>
-              <option value="Drainage & Sewerage">Drainage & Sewerage</option>
-              <option value="Streetlights">Streetlights</option>
-              <option value="Public Health & Sanitation">Public Health & Sanitation</option>
-              <option value="Parks & Trees">Parks & Trees</option>
-              <option value="Pollution Control">Pollution Control</option>
-              <option value="Public Safety">Public Safety</option>
-              <option value="Building & Construction">Building & Construction</option>
-              <option value="Others">Others</option>
-            </select>
-          </div>
+          {isAdmin ? (
+            <div className="filter-container">
+              <label className="filter-label">Department:</label>
+              <div
+                className="department-filter"
+                style={{ padding: "10px 14px" }}
+              >
+                {currentUser.department || "Not assigned"}
+              </div>
+            </div>
+          ) : (
+            <div className="filter-container">
+              <label className="filter-label">Filter By Department:</label>
+              <select
+                className="department-filter"
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+              >
+                <option value="all">All Departments</option>
+                <option value="Roads & Transport">Roads & Transport</option>
+                <option value="Water Supply">Water Supply</option>
+                <option value="Electricity">Electricity</option>
+                <option value="Waste Management">Waste Management</option>
+                <option value="Drainage & Sewerage">Drainage & Sewerage</option>
+                <option value="Streetlights">Streetlights</option>
+                <option value="Public Health & Sanitation">
+                  Public Health & Sanitation
+                </option>
+                <option value="Parks & Trees">Parks & Trees</option>
+                <option value="Pollution Control">Pollution Control</option>
+                <option value="Public Safety">Public Safety</option>
+                <option value="Building & Construction">
+                  Building & Construction
+                </option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+          )}
 
           <div style={{ marginLeft: 16, display: "flex", gap: "10px" }}>
             <button className="auth-button" onClick={handleAutoAssign}>
               Auto Assign
             </button>
-            <button 
-              className="auth-button" 
+            <button
+              className="auth-button"
               onClick={handleShowHeatmap}
-              style={{ backgroundColor: "#3b82f6" }} 
+              style={{ backgroundColor: "#3b82f6" }}
             >
               Show Heatmap
             </button>
@@ -281,7 +313,15 @@ const AdminDashboard = () => {
         </div>
 
         {/* STATISTICS WITH FILTERING */}
-        <div className="statistics-section" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
+        <div
+          className="statistics-section"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "20px",
+            justifyContent: "center",
+          }}
+        >
           <CircularProgress
             percentage={unsolvedPercentage}
             color="#ef4444"
@@ -365,8 +405,11 @@ const AdminDashboard = () => {
                     <div className="issue-header">
                       <h3>{issue.title}</h3>
                       <span className={`status-badge ${activeTab}`}>
-                        {activeTab === "inProgress" ? "In Progress" : 
-                         activeTab === "reReported" ? "Re-Reported" : activeTab}
+                        {activeTab === "inProgress"
+                          ? "In Progress"
+                          : activeTab === "reReported"
+                            ? "Re-Reported"
+                            : activeTab}
                       </span>
                     </div>
 

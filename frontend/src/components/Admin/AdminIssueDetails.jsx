@@ -18,11 +18,11 @@ import "./AdminIssueDetails.css";
 const AdminIssueDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [issue, setIssue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+
   // Worker assignment state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [workers, setWorkers] = useState([]);
@@ -154,12 +154,14 @@ const AdminIssueDetails = () => {
               >
                 📍 View Location
               </button>
-              <button
-                className="assign-worker-btn"
-                onClick={handleOpenAssignModal}
-              >
-                👷 Assign Issue
-              </button>
+              {!issue.assignedWorker && (
+                <button
+                  className="assign-worker-btn"
+                  onClick={handleOpenAssignModal}
+                >
+                  👷 Assign Issue
+                </button>
+              )}
             </div>
 
             <span className="issue-district2">
@@ -258,7 +260,7 @@ const AdminIssueDetails = () => {
           </div>
         </div>
       </div>
-      
+
       {showAssignModal && (
         <div className="assign-modal-overlay">
           {assigningTo ? (
@@ -284,11 +286,13 @@ const AdminIssueDetails = () => {
                   onChange={(e) => setDeptFilter(e.target.value)}
                 >
                   <option value="All">All Departments</option>
-                  {[...new Set(workers.map((w) => w.department))].map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
+                  {[...new Set(workers.map((w) => w.department))].map(
+                    (dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
               <div className="workers-list-container">
@@ -320,7 +324,9 @@ const AdminIssueDetails = () => {
                         </span>
                         <button
                           className="assign-action-btn"
-                          onClick={() => handleAssignWorker(worker.id, worker.name)}
+                          onClick={() =>
+                            handleAssignWorker(worker.id, worker.name)
+                          }
                         >
                           Assign
                         </button>
@@ -334,7 +340,7 @@ const AdminIssueDetails = () => {
             </div>
           )}
         </div>
-      )} 
+      )}
     </>
   );
 };

@@ -32,7 +32,8 @@ export const addComment = (issueId, commentText) =>
   API.post(`/issues/${issueId}/comments`, { text: commentText });
 export const getIssueById = (id) => API.get(`/issues/${id}`);
 export const upvoteIssue = (id) => API.post(`/issues/${id}/upvote`);
-export const getAllIssues = () => API.get("/issues/all");
+export const getAllIssues = (filters = {}) =>
+  API.get("/issues/all", { params: filters });
 export const getWorkerProfile = () => API.get(`/worker/profile`);
 
 // Chats
@@ -67,7 +68,7 @@ export const updateUserBio = (bio) => {
 };
 export const reReportIssue = (issueId, reason) => {
   return API.patch(`/users/reReport/${issueId}`, { reason });
-}
+};
 
 export const getUnseenNotifications = () => API.get("/notifications/unseen");
 export const markNotificationRead = (id) =>
@@ -88,5 +89,5 @@ export default {
   updateprofilepic,
   updateUserBio,
   getUnseenNotifications,
-  autoAssignIssues
+  autoAssignIssues,
 };

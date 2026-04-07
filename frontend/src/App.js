@@ -62,7 +62,7 @@ const ProtectedRoute = ({ children, roles }) => {
 /* -------------------- */
 const DashboardRoute = () => {
   const user = getUser();
-  if (user.role === "admin") return <AdminDashboard />;
+  if (user.role === "admin" || user.role === "superadmin") return <AdminDashboard />;
   if (user.role === "worker") return <WorkerDashboard />;
   return <Home />;
 };
@@ -187,7 +187,7 @@ function AppContent() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute roles={["admin", "user", "worker"]}>
+            <ProtectedRoute roles={["admin", "user", "worker","superadmin"]}>
               <DashboardRoute />
             </ProtectedRoute>
           }
@@ -215,7 +215,7 @@ function AppContent() {
         <Route
           path="/issue/:id"
           element={
-            <ProtectedRoute roles={["user", "admin"]}>
+            <ProtectedRoute roles={["user", "admin", "superadmin"]}>
               <IssueDetails />
             </ProtectedRoute>
           }
@@ -231,7 +231,7 @@ function AppContent() {
         <Route
           path="/user/:userId"
           element={
-            <ProtectedRoute roles={["user", "admin","worker"]}>
+            <ProtectedRoute roles={["user", "admin","worker","superadmin"]}>
               <UserProfile />
             </ProtectedRoute>
           }
@@ -239,7 +239,7 @@ function AppContent() {
         <Route
           path="/chat"
           element={
-            <ProtectedRoute roles={["user", "admin", "worker"]}>
+            <ProtectedRoute roles={["user", "admin", "worker", "superadmin"]}>
               <Chat />
             </ProtectedRoute>
           }
@@ -247,7 +247,7 @@ function AppContent() {
         <Route
           path="/chat-history"
           element={
-            <ProtectedRoute roles={["user", "admin", "worker"]}>
+            <ProtectedRoute roles={["user", "admin", "worker", "superadmin"]}>
               <ChatHistory />
             </ProtectedRoute>
           }
@@ -257,7 +257,7 @@ function AppContent() {
         <Route
           path="/admin/issue/:id"
           element={
-            <ProtectedRoute roles={["admin", "worker"]}>
+            <ProtectedRoute roles={["admin", "superadmin", "worker"]}>
               <AdminIssueDetails />
             </ProtectedRoute>
           }
@@ -273,7 +273,7 @@ function AppContent() {
         <Route
           path="/admin/profile"
           element={
-            <ProtectedRoute roles={["admin"]}>
+            <ProtectedRoute roles={["admin","superadmin"]}>
               <AdminProfile />
             </ProtectedRoute>
           }
@@ -281,7 +281,7 @@ function AppContent() {
         <Route
           path="/admin/heatmap"
           element={
-            <ProtectedRoute roles={["admin"]}>
+            <ProtectedRoute roles={["admin","superadmin"]}>
               <HeatmapPage />
             </ProtectedRoute>
           }

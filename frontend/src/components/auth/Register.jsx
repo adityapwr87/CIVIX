@@ -35,18 +35,41 @@ const Register = () => {
 
   // Find selected state object
   const selectedState = statesAndDistricts.find(
-    (item) => item.state === formData.state
+    (item) => item.state === formData.state,
   );
 
   // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
+    const nextState = {
+      ...formData,
       [name]: value,
       ...(name === "state" && { districtName: "" }),
-    }));
+    };
+
+    if (name === "role") {
+      if (value === "user") {
+        nextState.employeeId = "";
+        nextState.state = "";
+        nextState.districtName = "";
+        nextState.department = "";
+      }
+
+      if (value === "admin") {
+        nextState.department = "";
+      }
+
+      if (value === "superadmin") {
+        nextState.department = "";
+      }
+
+      if (value === "worker") {
+        nextState.employeeId = "";
+      }
+    }
+
+    setFormData(nextState);
   };
 
   // Submit handler
@@ -73,6 +96,13 @@ const Register = () => {
         requestBody.employeeId = formData.employeeId;
         requestBody.state = formData.state;
         requestBody.districtName = formData.districtName;
+        requestBody.department = formData.department;
+      }
+
+      if (formData.role === "superadmin") {
+        requestBody.employeeId = formData.employeeId;
+        requestBody.state = formData.state;
+        requestBody.districtName = formData.districtName;
       }
 
       if (formData.role === "worker") {
@@ -91,7 +121,7 @@ const Register = () => {
       navigate("/dashboard");
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to register. Please try again."
+        err.response?.data?.message || "Failed to register. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -148,13 +178,14 @@ const Register = () => {
               <select name="role" value={formData.role} onChange={handleChange}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
                 <option value="worker">Worker</option>
               </select>
             </div>
           </div>
 
-          {/* Admin Fields */}
-          {formData.role === "admin" && (
+          {/* Admin / Super Admin Fields */}
+          {(formData.role === "admin" || formData.role === "superadmin") && (
             <>
               {/* Employee ID */}
               <div className="form-group">
@@ -211,6 +242,45 @@ const Register = () => {
                   </select>
                 </div>
               </div>
+
+              {/* Department - Admin only */}
+              {formData.role === "admin" && (
+                <div className="form-group">
+                  <div className="input-icon">
+                    <FaBuilding />
+                    <select
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select Department</option>
+                      <option value="Electricity">Electricity</option>
+                      <option value="Roads & Transport">
+                        Roads & Transport
+                      </option>
+                      <option value="Public Health & Sanitation">
+                        Public Health & Sanitation
+                      </option>
+                      <option value="Waste Management">Waste Management</option>
+                      <option value="Drainage & Sewerage">
+                        Drainage & Sewerage
+                      </option>
+                      <option value="Pollution Control">
+                        Pollution Control
+                      </option>
+                      <option value="Water Supply">Water Supply</option>
+                      <option value="Parks & Trees">Parks & Trees</option>
+                      <option value="Public Safety">Public Safety</option>
+                      <option value="Streetlights">Streetlights</option>
+                      <option value="Building & Construction">
+                        Building & Construction
+                      </option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

@@ -34,10 +34,10 @@ const register = async (req, res) => {
 
     // Admin-specific validation
     if (role === "admin") {
-      if (!employeeId || !state || !districtName) {
+      if (!employeeId || !state || !districtName || !department) {
         return res.status(400).json({
           message:
-            "Employee ID, state, and district name are required for admins",
+            "Employee ID, state, district name, and department are required for admins",
         });
       }
 
@@ -53,10 +53,28 @@ const register = async (req, res) => {
         role: "admin",
         state,
         districtName,
+        department,
       });
       if (existingAdmin) {
         return res.status(400).json({
           message: `An admin already exists for ${districtName}, ${state}`,
+        });
+      }
+    }
+
+    // Superadmin-specific validation
+    if (role === "superadmin") {
+      if (!employeeId || !state || !districtName) {
+        return res.status(400).json({
+          message:
+            "Employee ID, state, and district name are required for superadmins",
+        });
+      }
+
+      if (!email.endsWith("@gov.in") && !email.endsWith("@nic.in")) {
+        return res.status(403).json({
+          message:
+            "Only official government emails are allowed for superadmins",
         });
       }
     }
@@ -80,6 +98,13 @@ const register = async (req, res) => {
     };
 
     if (role === "admin") {
+      newUserData.employeeId = employeeId;
+      newUserData.state = state;
+      newUserData.districtName = districtName;
+      newUserData.department = department;
+    }
+
+    if (role === "superadmin") {
       newUserData.employeeId = employeeId;
       newUserData.state = state;
       newUserData.districtName = districtName;
@@ -107,6 +132,7 @@ const register = async (req, res) => {
         role: newUser.role,
         state: newUser.state || null,
         districtName: newUser.districtName || null,
+        department: newUser.department || null,
       },
       details: newUser,
     });
@@ -138,6 +164,7 @@ const login = async (req, res) => {
           role: user.role,
           state: user.state || null,
           districtName: user.districtName || null,
+          department: user.department || null,
         },
         details: user,
       });
